@@ -14,18 +14,19 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+pub mod algo;
+
 use std::ops::{Index, IndexMut};
 use std::fmt;
 
 /// A cell of a Nonogram.
-///
-/// * **Empty**: An unsolved/uninitialized cell.
-/// * **Box**: A filled cell.
-/// * **Space**: A "x" cell.
 #[derive(Copy, Clone)]
 pub enum Cell {
+    /// An unsolved/uninitialized cell.
     Empty,
+    /// A filled cell.
     Box,
+    /// A "x" cell.
     Space,
 }
 
