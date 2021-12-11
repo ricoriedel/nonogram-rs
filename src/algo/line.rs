@@ -42,42 +42,41 @@ pub fn tighten_start(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()
     let mut index = chains.len() - 1;
 
     loop {
-        // Ignore boxes in range of the previous chain.
-        let stop = match chains.get(index + 1) {
-            Some(prev_chain) => prev_chain.start,
-            None => line.len()
+        let prev_index = index + 1;
+        let has_prev = prev_index < chains.len();
+
+        let stop = if has_prev {
+            chains[prev_index].start
+        } else {
+            line.len()
         };
 
-        let mut chain = chains[index];
+        let mut chain = chains.index_mut(index);
 
-        // The order is important!
-        tighten_start_by_box_at_end(&mut chain, line, stop);
-        tighten_start_by_boxes(&mut chain, line);
-        tighten_start_by_spaces(&mut chain, line)?;
+        // Apply metrics
+        tighten_start_by_box_at_end(chain, line, stop);
+        tighten_start_by_boxes(chain, line)?;
+        tighten_start_by_spaces(chain, line)?;
 
-        chains[index] = chain;
+        let end_of_chain = chain.start + chain.len + 1;
 
-        if let Some(prev_chain) = chains.get_mut(index + 1) {
-            let end_of_chain = chain.start + chain.len + 1;
-
-            // If range overlaps, reevaluate previous chain.
-            if prev_chain.start < end_of_chain {
-                prev_chain.start = end_of_chain;
-                index += 1;
-                continue;
-            }
-        }
-        if index == 0 {
+        if has_prev && chains[prev_index].start < end_of_chain {
+            // The end of this chain overlaps the start of the previous chain.
+            // We need to reevaluate it.
+            chains[prev_index].start = end_of_chain;
+            index = prev_index;
+        } else if index == 0 {
+            // This was the last element, stop.
             break;
+        } else {
+            // Move on
+            index -= 1;
         }
-        index -= 1;
     }
     Ok(())
 }
 
 /// Pulls the chain to the last box between [Chain::start] and the stop parameter.
-///
-/// *Does not verify feasibility.*
 fn tighten_start_by_box_at_end(chain: &mut Chain, line: &impl Line, stop: usize) {
     let start = chain.start + chain.len;
 
@@ -94,11 +93,10 @@ fn tighten_start_by_box_at_end(chain: &mut Chain, line: &impl Line, stop: usize)
 
 /// Moves the chain forward until the cell before the start is not a box.
 ///
-/// *Does not verify feasibility.*
-/// *If no free cell is found, start will be set to [Chain::stop] minus [Chain::len] plus 1.*
-fn tighten_start_by_boxes(chain: &mut Chain, line: &impl Line) {
+/// *Fails if no free cell is found.*
+fn tighten_start_by_boxes(chain: &mut Chain, line: &impl Line) -> Result<(), ()> {
     if chain.start == 0 {
-        return;
+        return Ok(());
     }
 
     let start = chain.start - 1;
@@ -109,17 +107,17 @@ fn tighten_start_by_boxes(chain: &mut Chain, line: &impl Line) {
             Cell::Empty | Cell::Space => {
                 chain.start = i + 1;
 
-                return;
+                return Ok(());
             }
             Cell::Box => ()
         }
     }
-    chain.start = stop + 1;
+    Err(())
 }
 
 /// Tightens the start bounds by looking for the first wide enough gab.
 ///
-/// *Fails if there is not enough space.*
+/// *Fails if no gap is found.*
 fn tighten_start_by_spaces(chain: &mut Chain, line: &impl Line) -> Result<(), ()> {
     let mut count = 0;
 
@@ -184,7 +182,7 @@ mod test {
             stop: data.len(),
         };
 
-        tighten_start_by_spaces(&mut chain, &data).unwrap();
+        tighten_start_by_spaces(&mut chain, &data);
 
         assert_eq!(chain.start, 0);
     }
@@ -204,7 +202,7 @@ mod test {
             stop: data.len(),
         };
 
-        tighten_start_by_spaces(&mut chain, &data).unwrap();
+        tighten_start_by_spaces(&mut chain, &data);
 
         assert_eq!(chain.start, 2);
     }
@@ -244,7 +242,7 @@ mod test {
             stop: data.len(),
         };
 
-        tighten_start_by_spaces(&mut chain, &data).unwrap();
+        tighten_start_by_spaces(&mut chain, &data);
 
         assert_eq!(chain.start, 2);
     }
@@ -298,7 +296,7 @@ mod test {
             Cell::Box,
             Cell::Box,
             Cell::Box,
-            Cell::Empty,//
+            Cell::Empty,
             Cell::Empty,
             Cell::Empty,
         ]);
@@ -308,9 +306,9 @@ mod test {
             stop: data.len(),
         };
 
-        tighten_start_by_boxes(&mut chain, &data);
+        let result = tighten_start_by_boxes(&mut chain, &data);
 
-        assert_eq!(chain.start, 5);
+        assert!(result.is_err());
     }
 
     #[test]
@@ -389,6 +387,7 @@ mod test {
             Cell::Empty,
             Cell::Box,
             Cell::Empty,
+            Cell::Space,
             Cell::Empty,
             Cell::Empty,
             Cell::Empty,
@@ -418,7 +417,7 @@ mod test {
         tighten_start(&mut chains, &data);
 
         assert_eq!(chains[0].start, 3);
-        assert_eq!(chains[1].start, 7);
-        assert_eq!(chains[2].start, 11);
+        assert_eq!(chains[1].start, 8);
+        assert_eq!(chains[2].start, 12);
     }
 }
