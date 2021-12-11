@@ -180,8 +180,8 @@ mod test {
     fn nonogram_new() {
         let n = Nonogram::new(3, 8);
 
-        assert!(n.cols() == 3);
-        assert!(n.rows() == 8);
+        assert_eq!(n.cols(), 3);
+        assert_eq!(n.rows(), 8);
     }
 
     #[test]
@@ -231,7 +231,7 @@ mod test {
     fn nonogram_col_mut_len() {
         let mut n = Nonogram::new(2, 7);
 
-        assert!(n.col_mut(0).len() == 7);
+        assert_eq!(n.col_mut(0).len(), 7);
     }
 
     #[test]
@@ -256,7 +256,7 @@ mod test {
     fn nonogram_row_mut_len() {
         let mut n = Nonogram::new(7, 2);
 
-        assert!(n.row_mut(0).len() == 7);
+        assert_eq!(n.row_mut(0).len(), 7);
     }
 
     #[test]
@@ -269,6 +269,6 @@ mod test {
 
         let str = "Size: 2x2\n. # \n  # \n";
 
-        assert!(format!("{}", n) == str);
+        assert_eq!(format!("{}", n), str);
     }
 }
