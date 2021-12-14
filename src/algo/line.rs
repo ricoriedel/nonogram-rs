@@ -36,17 +36,16 @@ impl Chain {
 
 /// Reduces the start bounds of all chains to the best possible value.
 pub fn tighten_start(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()> {
-    if chains.len() == 0 {
-        return Ok(());
-    }
-    let mut index = chains.len() - 1;
+    // We use the "previous" index because it avoids integer overflow and we need it any way.
+    let mut prev_index = chains.len();
 
-    // Loop instead of while to avoid overflow.
-    loop {
-        let opt_prev_index = if index + 1 < chains.len() { Some(index + 1) } else { None };
-        let stop = match opt_prev_index {
-            Some(i) => chains[i].start,
-            None => line.len()
+    while prev_index > 0 {
+        let index = prev_index - 1;
+
+        let has_prev = prev_index < chains.len();
+        let stop = match has_prev {
+            true => chains[prev_index].start,
+            false => line.len()
         };
 
         let mut chain = chains.index_mut(index);
@@ -56,22 +55,19 @@ pub fn tighten_start(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()
         tighten_start_by_boxes(chain, line)?;
         tighten_start_by_spaces(chain, line)?;
 
-        // Check if there is a previous chain.
-        if let Some(prev_index) = opt_prev_index {
+        if has_prev {
             let end_of_chain = chain.start + chain.len + 1;
 
             if chains[prev_index].start < end_of_chain {
+                chains[prev_index].start = end_of_chain;
+
                 // This chain overlaps with the previous chain.
                 // We need to reevaluate it.
-                chains[prev_index].start = end_of_chain;
-                index = prev_index;
+                prev_index += 1;
                 continue;
             }
         }
-        if index == 0 {
-            break;
-        }
-        index -= 1;
+        prev_index -= 1;
     }
     Ok(())
 }
@@ -98,7 +94,7 @@ pub fn tighten_stop(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()>
 
             if chains[prev_index].stop > start_of_chain {
                 chains[prev_index].stop = start_of_chain;
-                index = prev_index;
+                index -= 1;
                 continue;
             }
         };
