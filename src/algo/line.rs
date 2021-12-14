@@ -34,21 +34,19 @@ impl Chain {
     }
 }
 
+/// Reduces the start bounds of all chains to the best possible value.
 pub fn tighten_start(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()> {
     if chains.len() == 0 {
         return Ok(());
     }
-
     let mut index = chains.len() - 1;
 
+    // Loop instead of while to avoid overflow.
     loop {
-        let prev_index = index + 1;
-        let has_prev = prev_index < chains.len();
-
-        let stop = if has_prev {
-            chains[prev_index].start
-        } else {
-            line.len()
+        let opt_prev_index = if index + 1 < chains.len() { Some(index + 1) } else { None };
+        let stop = match opt_prev_index {
+            Some(i) => chains[i].start,
+            None => line.len()
         };
 
         let mut chain = chains.index_mut(index);
@@ -58,20 +56,53 @@ pub fn tighten_start(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()
         tighten_start_by_boxes(chain, line)?;
         tighten_start_by_spaces(chain, line)?;
 
-        let end_of_chain = chain.start + chain.len + 1;
+        // Check if there is a previous chain.
+        if let Some(prev_index) = opt_prev_index {
+            let end_of_chain = chain.start + chain.len + 1;
 
-        if has_prev && chains[prev_index].start < end_of_chain {
-            // The end of this chain overlaps the start of the previous chain.
-            // We need to reevaluate it.
-            chains[prev_index].start = end_of_chain;
-            index = prev_index;
-        } else if index == 0 {
-            // This was the last element, stop.
-            break;
-        } else {
-            // Move on
-            index -= 1;
+            if chains[prev_index].start < end_of_chain {
+                // This chain overlaps with the previous chain.
+                // We need to reevaluate it.
+                chains[prev_index].start = end_of_chain;
+                index = prev_index;
+                continue;
+            }
         }
+        if index == 0 {
+            break;
+        }
+        index -= 1;
+    }
+    Ok(())
+}
+
+/// Same as [tighten_start] for [Chain::stop].
+pub fn tighten_stop(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()> {
+    let mut index = 0;
+
+    while index < chains.len() {
+        let opt_prev_index = if index > 0 { Some(index - 1) } else { None };
+        let start = match opt_prev_index {
+            Some(i) => chains[i].stop,
+            None => 0
+        };
+
+        let mut chain = chains.index_mut(index);
+
+        tighten_stop_by_box_at_start(chain, line, start);
+        tighten_stop_by_boxes(chain, line)?;
+        tighten_stop_by_spaces(chain, line)?;
+
+        if let Some(prev_index) = opt_prev_index {
+            let start_of_chain = chain.stop - chain.len - 1;
+
+            if chains[prev_index].stop > start_of_chain {
+                chains[prev_index].stop = start_of_chain;
+                index = prev_index;
+                continue;
+            }
+        };
+        index += 1;
     }
     Ok(())
 }
@@ -84,6 +115,21 @@ fn tighten_start_by_box_at_end(chain: &mut Chain, line: &impl Line, stop: usize)
         match line[i] {
             Cell::Box => {
                 chain.start = i + 1 - chain.len;
+                return;
+            }
+            _ => ()
+        }
+    }
+}
+
+/// Same as [tighten_start_by_box_at_end] for [Chain::stop].
+fn tighten_stop_by_box_at_start(chain: &mut Chain, line: &impl Line, start: usize) {
+    let stop = chain.stop - chain.len;
+
+    for i in start..stop {
+        match line[i] {
+            Cell::Box => {
+                chain.stop = i + chain.len;
                 return;
             }
             _ => ()
@@ -115,6 +161,28 @@ fn tighten_start_by_boxes(chain: &mut Chain, line: &impl Line) -> Result<(), ()>
     Err(())
 }
 
+/// Same as [tighten_start_by_boxes] for [Chain::stop].
+fn tighten_stop_by_boxes(chain: &mut Chain, line: &impl Line) -> Result<(), ()> {
+    if chain.stop == line.len() {
+        return Ok(());
+    }
+
+    let start = chain.start + chain.len;
+    let stop = chain.stop + 1;
+
+    for i in (start..stop).rev() {
+        match line[i] {
+            Cell::Empty | Cell::Space => {
+                chain.stop = i;
+
+                return Ok(());
+            }
+            Cell::Box => ()
+        }
+    }
+    Err(())
+}
+
 /// Tightens the start bounds by looking for the first wide enough gab.
 ///
 /// *Fails if no gap is found.*
@@ -131,6 +199,29 @@ fn tighten_start_by_spaces(chain: &mut Chain, line: &impl Line) -> Result<(), ()
 
                 if count == chain.len {
                     chain.start = i + 1 - chain.len;
+
+                    return Ok(());
+                }
+            }
+        }
+    }
+    Err(())
+}
+
+/// Same as [tighten_start_by_spaces] but for [Chain#stop].
+fn tighten_stop_by_spaces(chain: &mut Chain, line: &impl Line) -> Result<(), ()> {
+    let mut count = 0;
+
+    for i in (chain.start..chain.stop).rev() {
+        match line[i] {
+            Cell::Space => {
+                count = 0;
+            }
+            Cell::Empty | Cell::Box => {
+                count += 1;
+
+                if count == chain.len {
+                    chain.stop = i + chain.len;
 
                     return Ok(());
                 }
@@ -419,5 +510,52 @@ mod test {
         assert_eq!(chains[0].start, 3);
         assert_eq!(chains[1].start, 8);
         assert_eq!(chains[2].start, 12);
+    }
+
+    // TODO: Unit tests
+
+    #[test]
+    fn tighten_stop_forward_backward() {
+        let data = VecLine(vec![
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Box,
+            Cell::Space,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Space,
+            Cell::Empty,
+            Cell::Box,
+            Cell::Empty,
+            Cell::Box,
+
+            Cell::Empty,
+            Cell::Space,
+            Cell::Space,
+        ]);
+        let mut chains = vec![
+            Chain {
+                len: 3,
+                start: 0,
+                stop: data.len(),
+            },
+            Chain {
+                len: 3,
+                start: 0,
+                stop: data.len(),
+            },
+            Chain {
+                len: 3,
+                start: 0,
+                stop: data.len(),
+            },
+        ];
+
+        tighten_stop(&mut chains, &data);
+
+        assert_eq!(chains[0].stop, 3);
+        assert_eq!(chains[1].stop, 7);
+        assert_eq!(chains[2].stop, 12);
     }
 }
