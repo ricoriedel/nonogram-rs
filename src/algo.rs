@@ -375,7 +375,7 @@ mod test {
             stop: data.len(),
         };
 
-        tighten_start_by_spaces(&mut chain, &data);
+        tighten_start_by_spaces(&mut chain, &data).unwrap();
 
         assert_eq!(chain.start, 0);
     }
@@ -395,7 +395,7 @@ mod test {
             stop: data.len(),
         };
 
-        tighten_start_by_spaces(&mut chain, &data);
+        tighten_start_by_spaces(&mut chain, &data).unwrap();
 
         assert_eq!(chain.start, 2);
     }
@@ -435,7 +435,7 @@ mod test {
             stop: data.len(),
         };
 
-        tighten_start_by_spaces(&mut chain, &data);
+        tighten_start_by_spaces(&mut chain, &data).unwrap();
 
         assert_eq!(chain.start, 2);
     }
@@ -455,7 +455,7 @@ mod test {
             stop: data.len(),
         };
 
-        tighten_stop_by_spaces(&mut chain, &data);
+        tighten_stop_by_spaces(&mut chain, &data).unwrap();
 
         assert_eq!(chain.stop, data.len());
     }
@@ -475,7 +475,7 @@ mod test {
             stop: data.len(),
         };
 
-        tighten_stop_by_spaces(&mut chain, &data);
+        tighten_stop_by_spaces(&mut chain, &data).unwrap();
 
         assert_eq!(chain.stop, 3);
     }
@@ -515,7 +515,7 @@ mod test {
             stop: 4,
         };
 
-        tighten_stop_by_spaces(&mut chain, &data);
+        tighten_stop_by_spaces(&mut chain, &data).unwrap();
 
         assert_eq!(chain.stop, 4);
     }
@@ -535,7 +535,7 @@ mod test {
             stop: data.len(),
         };
 
-        tighten_start_by_boxes(&mut chain, &data);
+        tighten_start_by_boxes(&mut chain, &data).unwrap();
 
         assert_eq!(chain.start, 0);
     }
@@ -599,7 +599,7 @@ mod test {
             stop: data.len(),
         };
 
-        tighten_stop_by_boxes(&mut chain, &data);
+        tighten_stop_by_boxes(&mut chain, &data).unwrap();
 
         assert_eq!(chain.stop, data.len());
     }
@@ -621,7 +621,7 @@ mod test {
             stop: 5,
         };
 
-        tighten_stop_by_boxes(&mut chain, &data);
+        tighten_stop_by_boxes(&mut chain, &data).unwrap();
 
         assert_eq!(chain.stop, 3);
     }
@@ -817,7 +817,7 @@ mod test {
             },
         ];
 
-        tighten_start(&mut chains, &data);
+        tighten_start(&mut chains, &data).unwrap();
 
         assert_eq!(chains[0].start, 3);
         assert_eq!(chains[1].start, 8);
@@ -862,7 +862,7 @@ mod test {
             },
         ];
 
-        tighten_stop(&mut chains, &data);
+        tighten_stop(&mut chains, &data).unwrap();
 
         assert_eq!(chains[0].stop, 3);
         assert_eq!(chains[1].stop, 7);
