@@ -14,28 +14,134 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::ops::IndexMut;
-use crate::{Cell, Line};
+use crate::{Nonogram, Line, Cell};
 
 #[derive(Copy, Clone)]
-pub struct Chain {
+struct Chain {
     len: usize,
     start: usize,
     stop: usize,
 }
 
+#[derive(Clone)]
+struct Layout {
+    data: Vec<Chain>,
+    changed: bool,
+}
+
+#[derive(Clone)]
+struct Branch {
+    cols: Vec<Layout>,
+    rows: Vec<Layout>,
+    nonogram: Nonogram
+}
+
 impl Chain {
-    pub fn new(len: usize, stop: usize) -> Self {
+    fn new(len: usize, stop: usize) -> Self {
         Self {
             len,
             start: 0,
             stop,
         }
     }
+
+    fn from(nums: &Vec<usize>, stop: usize) -> Vec<Self> {
+        nums.iter()
+            .filter(|len| **len != 0)
+            .map(|len| Chain::new(*len, stop))
+            .collect()
+    }
 }
 
+impl Layout {
+    fn new(data: Vec<Chain>) -> Self {
+        Self {
+            data,
+            changed: true
+        }
+    }
+
+    fn from(lines: Vec<Vec<usize>>, stop: usize) -> Vec<Layout> {
+        lines.iter()
+            .map(|line| Layout::new(Chain::from(line, stop)))
+            .collect()
+    }
+}
+
+impl Branch {
+    fn new(cols: Vec<Vec<usize>>, rows: Vec<Vec<usize>>) -> Self {
+        let nonogram = Nonogram::new(cols.len(), rows.len());
+
+        Branch {
+            cols: Layout::from(cols, nonogram.rows()),
+            rows: Layout::from(rows, nonogram.cols()),
+            nonogram,
+        }
+    }
+}
+
+pub fn solve(cols: Vec<Vec<usize>>, rows: Vec<Vec<usize>>) -> Result<Nonogram, ()> {
+    // Stack of unsolved branches.
+    let mut branches = vec![Branch::new(cols, rows)];
+
+    // While not exhausted.
+    while let Some(mut branch) = branches.pop() {
+
+        try_solve(&mut branch)?;
+
+        match verify(&branch.nonogram) {
+            Ok(_) => return Ok(branch.nonogram),
+            Err(pos) => {
+                // Not solved, fork branch.
+
+                branch.cols[pos.0].changed = true;
+                branch.rows[pos.1].changed = true;
+
+                let mut clone = branch.clone();
+
+                branch.nonogram[pos] = Cell::Space;
+                clone.nonogram[pos] = Cell::Box;
+
+                branches.push(branch);
+                branches.push(clone);
+            }
+        }
+    }
+    Err(())
+}
+
+fn try_solve(branch: &mut Branch) -> Result<(), ()> {
+    todo!()
+}
+
+fn write_spaces(chains: &Vec<Chain>, opposite: &mut Vec<Layout>) -> bool {
+    let changed = false;
+
+    let mut last_stop = 0;
+
+    for chain in chains.iter() {
+
+        last_stop = chain.stop;
+    }
+
+    changed
+}
+
+fn verify(nonogram: &Nonogram) -> Result<(), (usize, usize)> {
+    for col in 0..nonogram.cols() {
+        for row in 0..nonogram.rows() {
+            match nonogram[(col, row)] {
+                Cell::Empty => return Err((col, row)),
+                _ => ()
+            }
+        }
+    }
+    Ok(())
+}
+
+
 /// Reduces the start bounds of all chains to the best possible value.
-pub fn tighten_start(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()> {
+fn tighten_start(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()> {
     // We use the "previous" index because it avoids integer overflow and we need it any way.
     let mut prev_index = chains.len();
 
@@ -48,7 +154,7 @@ pub fn tighten_start(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()
             false => line.len()
         };
 
-        let mut chain = chains.index_mut(index);
+        let chain = &mut chains[index];
 
         // Apply metrics
         tighten_start_by_box_at_end(chain, line, stop);
@@ -73,7 +179,7 @@ pub fn tighten_start(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()
 }
 
 /// Same as [tighten_start] for [Chain::stop].
-pub fn tighten_stop(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()> {
+fn tighten_stop(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()> {
     let mut index = 0;
 
     while index < chains.len() {
@@ -83,7 +189,7 @@ pub fn tighten_stop(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()>
             None => 0
         };
 
-        let mut chain = chains.index_mut(index);
+        let chain = &mut chains[index];
 
         tighten_stop_by_box_at_start(chain, line, start);
         tighten_stop_by_boxes(chain, line)?;
