@@ -335,6 +335,86 @@ mod test {
     }
 
     #[test]
+    fn tighten_stop_by_spaces_no_spaces() {
+        let data = VecLine(vec![
+            Cell::Empty,
+            Cell::Box,
+            Cell::Empty,
+            Cell::Box,
+            Cell::Empty,
+        ]);
+        let mut chain = Chain {
+            len: 3,
+            start: 0,
+            stop: data.len(),
+        };
+
+        tighten_stop_by_spaces(&mut chain, &data);
+
+        assert_eq!(chain.stop, data.len());
+    }
+
+    #[test]
+    fn tighten_stop_by_spaces_with_spaces() {
+        let data = VecLine(vec![
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Box,
+            Cell::Space,
+            Cell::Empty,
+        ]);
+        let mut chain = Chain {
+            len: 3,
+            start: 0,
+            stop: data.len(),
+        };
+
+        tighten_stop_by_spaces(&mut chain, &data);
+
+        assert_eq!(chain.stop, 3);
+    }
+
+    #[test]
+    fn tighten_stop_by_spaces_invalid() {
+        let data = VecLine(vec![
+            Cell::Empty,
+            Cell::Space,
+            Cell::Box,
+            Cell::Space,
+            Cell::Empty,
+        ]);
+        let mut chain = Chain {
+            len: 3,
+            start: 0,
+            stop: data.len(),
+        };
+
+        let result = tighten_stop_by_spaces(&mut chain, &data);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn tighten_stop_by_spaces_range() {
+        let data = VecLine(vec![
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+        ]);
+        let mut chain = Chain {
+            len: 3,
+            start: 0,
+            stop: 4,
+        };
+
+        tighten_stop_by_spaces(&mut chain, &data);
+
+        assert_eq!(chain.stop, 4);
+    }
+
+    #[test]
     fn tighten_start_by_boxes_start_of_line() {
         let data = VecLine(vec![
             Cell::Box,
@@ -394,6 +474,70 @@ mod test {
         };
 
         let result = tighten_start_by_boxes(&mut chain, &data);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn tighten_stop_by_boxes_end_of_line() {
+        let data = VecLine(vec![
+            Cell::Box,
+            Cell::Box,
+            Cell::Box,
+            Cell::Box,
+            Cell::Box,
+        ]);
+        let mut chain = Chain {
+            len: 3,
+            start: 0,
+            stop: data.len(),
+        };
+
+        tighten_stop_by_boxes(&mut chain, &data);
+
+        assert_eq!(chain.stop, data.len());
+    }
+
+    #[test]
+    fn tighten_stop_by_boxes_start_some_boxes() {
+        let data = VecLine(vec![
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Box,
+            Cell::Box,
+            Cell::Empty,
+        ]);
+        let mut chain = Chain {
+            len: 3,
+            start: 0,
+            stop: 5,
+        };
+
+        tighten_stop_by_boxes(&mut chain, &data);
+
+        assert_eq!(chain.stop, 3);
+    }
+
+    #[test]
+    fn tighten_stop_by_boxes_not_enough_space() {
+        let data = VecLine(vec![
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Box,
+            Cell::Box,
+            Cell::Box,
+            Cell::Empty,
+        ]);
+        let mut chain = Chain {
+            len: 3,
+            start: 0,
+            stop: 5,
+        };
+
+        let result = tighten_stop_by_boxes(&mut chain, &data);
 
         assert!(result.is_err());
     }
@@ -465,6 +609,72 @@ mod test {
     }
 
     #[test]
+    fn tighten_stop_by_box_at_start_no_box() {
+        let data = VecLine(vec![
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+        ]);
+        let mut chain = Chain {
+            len: 3,
+            start: 0,
+            stop: data.len(),
+        };
+
+        tighten_stop_by_box_at_start(&mut chain, &data, 0);
+
+        assert_eq!(chain.stop, data.len());
+    }
+
+    #[test]
+    fn tighten_stop_by_box_at_start_a_box() {
+        let data = VecLine(vec![
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Box,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+        ]);
+        let mut chain = Chain {
+            len: 3,
+            start: 0,
+            stop: data.len(),
+        };
+
+        tighten_stop_by_box_at_start(&mut chain, &data, 0);
+
+        assert_eq!(chain.stop, 5);
+    }
+
+    #[test]
+    fn tighten_stop_by_box_at_start_a_box_before_start() {
+        let data = VecLine(vec![
+            Cell::Empty,
+            Cell::Box,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+            Cell::Empty,
+        ]);
+        let mut chain = Chain {
+            len: 3,
+            start: data.len(),
+            stop: data.len(),
+        };
+
+        tighten_stop_by_box_at_start(&mut chain, &data, 2);
+
+        assert_eq!(chain.stop, data.len());
+    }
+
+    #[test]
     fn tighten_start_forward_backward() {
         let data = VecLine(vec![
             Cell::Space,
@@ -507,8 +717,6 @@ mod test {
         assert_eq!(chains[1].start, 8);
         assert_eq!(chains[2].start, 12);
     }
-
-    // TODO: Unit tests
 
     #[test]
     fn tighten_stop_forward_backward() {
