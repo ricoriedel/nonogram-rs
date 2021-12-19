@@ -16,6 +16,9 @@
 
 pub mod algo;
 
+#[cfg(feature = "import")]
+pub mod import;
+
 use std::ops::{Index, IndexMut};
 use std::fmt;
 
