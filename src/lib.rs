@@ -14,7 +14,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod algo;
+mod algo;
 
 #[cfg(feature = "import")]
 pub mod import;
@@ -173,6 +173,10 @@ impl<'a> Line for RowMut<'a> {
     fn len(&self) -> usize {
         self.nonogram.cols()
     }
+}
+
+pub fn solve(cols: Vec<Vec<usize>>, rows: Vec<Vec<usize>>) -> Result<Nonogram, ()> {
+    algo::solve(cols, rows)
 }
 
 #[cfg(test)]
