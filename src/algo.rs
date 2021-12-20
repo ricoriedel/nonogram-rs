@@ -16,6 +16,7 @@
 
 use crate::{Nonogram, Line, Cell};
 
+/// Information about a chain of boxes.
 #[derive(Copy, Clone)]
 struct Chain {
     len: usize,
@@ -23,17 +24,20 @@ struct Chain {
     stop: usize,
 }
 
+/// Information about a line with a boolean indicating if it needs reevaluation.
 #[derive(Clone)]
-struct Layout {
+struct LineLayout {
     data: Vec<Chain>,
     changed: bool,
 }
 
+/// A branch in the solving process.
+/// Each time a dead end is reach, the branch is forked.
 #[derive(Clone)]
 struct Branch {
-    cols: Vec<Layout>,
-    rows: Vec<Layout>,
-    nonogram: Nonogram
+    cols: Vec<LineLayout>,
+    rows: Vec<LineLayout>,
+    nonogram: Nonogram,
 }
 
 impl Chain {
@@ -45,25 +49,25 @@ impl Chain {
         }
     }
 
-    fn from(nums: &Vec<usize>, stop: usize) -> Vec<Self> {
-        nums.iter()
-            .filter(|len| **len != 0)
-            .map(|len| Chain::new(*len, stop))
+    fn from_numbers(nums: Vec<usize>, stop: usize) -> Vec<Self> {
+        nums.into_iter()
+            .filter(|len| *len != 0)
+            .map(|len| Chain::new(len, stop))
             .collect()
     }
 }
 
-impl Layout {
+impl LineLayout {
     fn new(data: Vec<Chain>) -> Self {
         Self {
             data,
-            changed: true
+            changed: true,
         }
     }
 
-    fn from(lines: Vec<Vec<usize>>, stop: usize) -> Vec<Layout> {
-        lines.iter()
-            .map(|line| Layout::new(Chain::from(line, stop)))
+    fn from_lines(lines: Vec<Vec<usize>>, stop: usize) -> Vec<Self> {
+        lines.into_iter()
+            .map(|nums| LineLayout::new(Chain::from_numbers(nums, stop)))
             .collect()
     }
 }
@@ -73,8 +77,8 @@ impl Branch {
         let nonogram = Nonogram::new(cols.len(), rows.len());
 
         Branch {
-            cols: Layout::from(cols, nonogram.rows()),
-            rows: Layout::from(rows, nonogram.cols()),
+            cols: LineLayout::from_lines(cols, nonogram.rows()),
+            rows: LineLayout::from_lines(rows, nonogram.cols()),
             nonogram,
         }
     }
@@ -86,9 +90,10 @@ pub fn solve(cols: Vec<Vec<usize>>, rows: Vec<Vec<usize>>) -> Result<Nonogram, (
 
     // While not exhausted.
     while let Some(mut branch) = branches.pop() {
-
-        try_solve(&mut branch)?;
-
+        match try_solve(&mut branch) {
+            Ok(_) => (),
+            Err(_) => continue
+        }
         match verify(&branch.nonogram) {
             Ok(_) => return Ok(branch.nonogram),
             Err(pos) => {
@@ -110,23 +115,102 @@ pub fn solve(cols: Vec<Vec<usize>>, rows: Vec<Vec<usize>>) -> Result<Nonogram, (
     Err(())
 }
 
+/// Tries to solve a branch without recursion.
+/// Loops until no more change is detected.
 fn try_solve(branch: &mut Branch) -> Result<(), ()> {
-    todo!()
+    let mut changed = true;
+
+    while changed {
+        changed = false;
+
+        for i in 0..branch.cols.len() {
+            let layout = &mut branch.cols[i];
+
+            if layout.changed {
+                layout.changed = false;
+
+                let chains = &mut layout.data;
+                let line = &mut branch.nonogram.col_mut(i);
+                let rows = &mut branch.rows;
+
+                changed |= try_solve_line(chains, line, rows)?;
+            }
+        }
+        for i in 0..branch.rows.len() {
+            let layout = &mut branch.rows[i];
+
+            if layout.changed {
+                layout.changed = false;
+
+                let chains = &mut layout.data;
+                let line = &mut branch.nonogram.row_mut(i);
+                let cols = &mut branch.cols;
+
+                changed |= try_solve_line(chains, line, cols)?;
+            }
+        }
+    }
+    Ok(())
 }
 
-fn write_spaces(chains: &Vec<Chain>, opposite: &mut Vec<Layout>) -> bool {
-    let changed = false;
+/// Solves a line as far as possible.
+fn try_solve_line(chains: &mut Vec<Chain>, line: &mut impl Line, opposite: &mut Vec<LineLayout>) -> Result<bool, ()> {
+    let mut changed = false;
 
-    let mut last_stop = 0;
+    // Every function returning a boolean and combining them with OR is tedious and error prone.
+    // This might need refactoring.
 
-    for chain in chains.iter() {
+    tighten_start(chains, line)?;
+    tighten_stop(chains, line)?;
+    changed |= write_boxes(line, chains, opposite);
+    changed |= write_spaces(line, chains, opposite);
 
-        last_stop = chain.stop;
+    Ok(changed)
+}
+
+/// Fills the center of the cains with boxes and marks the corresponding layouts as changed.
+fn write_boxes(line: &mut impl Line, chains: &Vec<Chain>, opposite: &mut Vec<LineLayout>) -> bool {
+    let mut changed = false;
+
+    for chain in chains {
+        let start = chain.stop - chain.len;
+        let stop = chain.start + chain.len;
+
+        changed |= fill(line, Cell::Box, start, stop, opposite);
     }
-
     changed
 }
 
+/// Fills the line between the chains with spaces and marks the corresponding layouts as changed.
+fn write_spaces(line: &mut impl Line, chains: &Vec<Chain>, opposite: &mut Vec<LineLayout>) -> bool {
+    let mut changed = false;
+    let mut last_stop = 0;
+
+    for chain in chains {
+        changed |= fill(line, Cell::Space, last_stop, chain.start, opposite);
+        last_stop = chain.stop;
+    }
+    changed |= fill(line, Cell::Space, last_stop, line.len(), opposite);
+    changed
+}
+
+/// Fills the line inside the given range with the given value and marks the corresponding layouts as changed.
+fn fill(line: &mut impl Line, value: Cell, from: usize, to: usize, opposite: &mut Vec<LineLayout>) -> bool {
+    let mut changed = false;
+
+    for i in from..to {
+        if line[i] != value {
+            line[i] = value;
+            opposite[i].changed = true;
+            changed = true;
+        }
+    }
+    changed
+}
+
+/// Checks if there is an unsolved cell.
+/// Returns [Result::Ok] if none is found.
+/// Returns [Result::Err] if an unsolved cell is found.
 fn verify(nonogram: &Nonogram) -> Result<(), (usize, usize)> {
     for col in 0..nonogram.cols() {
         for row in 0..nonogram.rows() {
@@ -138,7 +222,6 @@ fn verify(nonogram: &Nonogram) -> Result<(), (usize, usize)> {
     }
     Ok(())
 }
-
 
 /// Reduces the start bounds of all chains to the best possible value.
 fn tighten_start(chains: &mut Vec<Chain>, line: &impl Line) -> Result<(), ()> {
@@ -557,7 +640,7 @@ mod test {
             stop: data.len(),
         };
 
-        tighten_start_by_boxes(&mut chain, &data);
+        tighten_start_by_boxes(&mut chain, &data).unwrap();
 
         assert_eq!(chain.start, 4);
     }
@@ -839,7 +922,6 @@ mod test {
             Cell::Box,
             Cell::Empty,
             Cell::Box,
-
             Cell::Empty,
             Cell::Space,
             Cell::Space,

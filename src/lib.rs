@@ -23,7 +23,7 @@ use std::ops::{Index, IndexMut};
 use std::fmt;
 
 /// A cell of a Nonogram.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum Cell {
     /// An unsolved/uninitialized cell.
     Empty,
