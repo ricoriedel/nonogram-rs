@@ -98,7 +98,7 @@ impl Nonogram {
         assert!(pos.0 < self.cols);
         assert!(pos.1 < self.rows);
 
-        pos.0 * self.cols + pos.1
+        pos.0 * self.rows + pos.1
     }
 }
 
