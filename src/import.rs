@@ -1,8 +1,4 @@
-use std::fs;
-use std::path::Path;
 use serde::{Serialize, Deserialize};
-
-use crate::algo;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Layout {
@@ -11,16 +7,28 @@ pub struct Layout {
 }
 
 #[derive(Deserialize)]
-pub struct TealLayout {
+struct TealLayout {
     ver: Vec<Vec<usize>>,
     hor: Vec<Vec<usize>>
 }
 
-impl Into<Layout> for TealLayout {
-    fn into(self) -> Layout {
-        Layout {
-            cols: self.hor,
-            rows: self.ver
+impl From<TealLayout> for Layout {
+    fn from(teal: TealLayout) -> Self {
+        Self {
+            cols: teal.hor,
+            rows: teal.ver
         }
     }
+}
+
+pub fn import(json: &str) -> Result<Layout, serde_json::Error> {
+    let layout = serde_json::from_str::<Layout>(json)?;
+
+    Ok(layout)
+}
+
+pub fn import_teal(json: &str) -> Result<Layout, serde_json::Error> {
+    let layout = serde_json::from_str::<TealLayout>(json)?;
+
+    Ok(layout.into())
 }
