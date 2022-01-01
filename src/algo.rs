@@ -45,40 +45,39 @@ impl Chain {
         Self {
             len,
             start: 0,
-            stop,
+            stop
         }
     }
 
-    fn from_numbers(nums: Vec<usize>, stop: usize) -> Vec<Self> {
+    fn new_vec(nums: Vec<usize>, stop: usize) -> Vec<Self> {
         nums.into_iter()
-            .filter(|len| *len != 0)
             .map(|len| Chain::new(len, stop))
             .collect()
     }
 }
 
 impl LineLayout {
-    fn new(data: Vec<Chain>) -> Self {
+    fn new(data: Vec<usize>, stop: usize) -> Self {
         Self {
-            data,
-            changed: true,
+            data: Chain::new_vec(data, stop),
+            changed: true
         }
     }
 
-    fn from_lines(lines: Vec<Vec<usize>>, stop: usize) -> Vec<Self> {
-        lines.into_iter()
-            .map(|nums| LineLayout::new(Chain::from_numbers(nums, stop)))
+    fn new_vec(data: Vec<Vec<usize>>, stop: usize) -> Vec<Self> {
+        data.into_iter()
+            .map(|line| LineLayout::new(line, stop))
             .collect()
     }
 }
 
 impl Branch {
-    fn new(cols: Vec<Vec<usize>>, rows: Vec<Vec<usize>>) -> Self {
+     fn new(cols: Vec<Vec<usize>>, rows: Vec<Vec<usize>>) -> Self {
         let nonogram = Nonogram::new(cols.len(), rows.len());
 
-        Branch {
-            cols: LineLayout::from_lines(cols, nonogram.rows()),
-            rows: LineLayout::from_lines(rows, nonogram.cols()),
+        Self {
+            cols: LineLayout::new_vec(cols, nonogram.rows()),
+            rows: LineLayout::new_vec(rows, nonogram.cols()),
             nonogram,
         }
     }
