@@ -11,6 +11,8 @@ cargo build --release --bin nonosolver --features="json cmd"
 ### Solve
 ```shell
 nonosolver --in-json '{"cols": [[3], [1], [2]], "rows": [[2], [1, 1], [1, 1]]}'
+# OR
+nonosolver --in-file 'layout.json'
 ```
 ```
 Size: 3x3

@@ -22,7 +22,7 @@ pub mod json;
 use std::ops::{Index, IndexMut};
 use std::fmt;
 
-/// A cell of a Nonogram.
+/// A cell of a nonogram.
 #[derive(Copy, Clone, PartialEq)]
 pub enum Cell {
     /// An unsolved/uninitialized cell.
@@ -34,6 +34,17 @@ pub enum Cell {
 }
 
 /// A nonogram, that's it.
+///
+/// # Example
+/// ```
+/// use nonogram_rs::{Nonogram, Cell};
+///
+/// let mut nonogram = Nonogram::new(3, 3);
+///
+/// nonogram[(2, 0)] = Cell::Space;
+///
+/// println!("{}", nonogram);
+/// ```
 #[derive(Clone)]
 pub struct Nonogram {
     cols: usize,
@@ -64,6 +75,7 @@ pub trait Line: IndexMut<usize, Output=Cell> {
 }
 
 impl Nonogram {
+    /// Creates a new nonogram with the given size.
     pub fn new(cols: usize, rows: usize) -> Self {
         Self {
             cols,
@@ -72,14 +84,17 @@ impl Nonogram {
         }
     }
 
-    pub fn rows(&self) -> usize {
-        self.rows
-    }
-
+    /// The column count
     pub fn cols(&self) -> usize {
         self.cols
     }
 
+    /// The row count
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+
+    /// Returns a reference to a column.
     pub fn col_mut(&mut self, col: usize) -> ColMut {
         ColMut {
             nonogram: self,
@@ -87,6 +102,7 @@ impl Nonogram {
         }
     }
 
+    /// Returns a reference to a row.
     pub fn row_mut(&mut self, row: usize) -> RowMut {
         RowMut {
             nonogram: self,
@@ -94,6 +110,10 @@ impl Nonogram {
         }
     }
 
+    /// Returns the actual index of a cell.
+    ///
+    /// # Panics
+    /// If the cell is out of range.
     fn index_of(&self, pos: (usize, usize)) -> usize {
         assert!(pos.0 < self.cols);
         assert!(pos.1 < self.rows);
@@ -177,6 +197,19 @@ impl<'a> Line for RowMut<'a> {
     }
 }
 
+/// Solves a nonogram.
+///
+/// # Example
+/// ```
+/// use nonogram_rs::solve;
+///
+/// let cols = vec![vec![3], vec![1], vec![2]];
+/// let rows = vec![vec![2], vec![1, 1], vec![1, 1]];
+///
+/// let nonogram = solve(cols, rows).unwrap();
+///
+/// println!("{}", nonogram);
+/// ```
 pub fn solve(cols: Vec<Vec<usize>>, rows: Vec<Vec<usize>>) -> Result<Nonogram, ()> {
     algo::solve(cols, rows)
 }

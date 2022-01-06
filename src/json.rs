@@ -17,18 +17,22 @@
 use serde::{Serialize, Deserialize};
 use crate::{Cell, Nonogram, solve};
 
+/// A serializable struct containing raw layout information.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Layout {
     pub cols: Vec<Vec<usize>>,
     pub rows: Vec<Vec<usize>>
 }
 
+/// A serializable representation of a nonogram which is not suitable for normal use.
+/// It can be converted to a regular nonogram or be option from a regular nonogram.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct RawNonogram {
     pub rows: Vec<Vec<u8>>
 }
 
 impl Layout {
+    /// Creates a new layout.
     pub fn new(cols: Vec<Vec<usize>>, rows: Vec<Vec<usize>>) -> Self {
         Self {
             cols,
@@ -36,14 +40,17 @@ impl Layout {
         }
     }
 
+    /// Same as `serde_json::from_str`.
     pub fn from_json(json: &str) -> Result<Layout, serde_json::Error> {
         serde_json::from_str(json)
     }
 
+    /// Consumes the layout and solves the nonogram.
     pub fn solve(self) -> Result<Nonogram, ()> {
         solve(self.cols, self.rows)
     }
 
+    /// Same as `serde_json::to_string`.
     pub fn to_json(&self) -> String {
         serde_json::to_string(self).unwrap()
     }
@@ -73,16 +80,19 @@ impl TryFrom<u8> for Cell {
 }
 
 impl RawNonogram {
+    /// Creates a new raw nonogram.
     pub fn new(rows: Vec<Vec<u8>>) -> Self {
         Self {
             rows
         }
     }
 
+    /// Same as `serde_json::from_str`.
     pub fn from_json(json: &str) -> Result<RawNonogram, serde_json::Error> {
         serde_json::from_str(json)
     }
 
+    /// Same as `serde_json::to_string`.
     pub fn to_json(&self) -> String {
         serde_json::to_string(self).unwrap()
     }
