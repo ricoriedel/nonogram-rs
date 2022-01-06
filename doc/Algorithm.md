@@ -79,6 +79,6 @@ We repeat these steps until we are done.
 
 ## Recursion
 Some nonograms might require recursion as no more conclusions can be drawn.
-In this case the nonogram and the layout information is copy inside memory.
+In this case the nonogram and the layout information is copied inside memory.
 Now we guess that one of the not solved cells is a box.
 If trying to solve this nonogram fails, we know that it must have been a space in which case we alter the copy accordingly and continue with the copy.
