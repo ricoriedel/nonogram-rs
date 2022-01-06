@@ -145,7 +145,8 @@ impl Index<(usize, usize)> for Nonogram {
     type Output = Cell;
 
     fn index(&self, pos: (usize, usize)) -> &Self::Output {
-        &self.data[self.index_of(pos)]
+        // Index is verified in Nonogram::index_of.
+        unsafe { self.data.get_unchecked(self.index_of(pos)) }
     }
 }
 
@@ -153,7 +154,8 @@ impl IndexMut<(usize, usize)> for Nonogram {
     fn index_mut(&mut self, pos: (usize, usize)) -> &mut Self::Output {
         let i = self.index_of(pos);
 
-        &mut self.data[i]
+        // Index is verified in Nonogram::index_of.
+        unsafe { self.data.get_unchecked_mut(i) }
     }
 }
 

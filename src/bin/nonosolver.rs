@@ -21,7 +21,7 @@ use nonogram_rs::{Nonogram};
 
 fn main() {
     let matches = App::new("NonoSolver")
-        .version("1.0.0")
+        .version("1.0.1")
         .author("Copyright (C) 2021 Rico Riedel <rico.riedel@protonmail.ch>")
         .about(
 r#"A fast and simple nonogram solver.
