@@ -2,5 +2,5 @@
 
 mod bench;
 
-#[cfg(feature = "import")]
+#[cfg(feature = "json")]
 mod res;

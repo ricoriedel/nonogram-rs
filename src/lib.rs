@@ -16,8 +16,8 @@
 
 mod algo;
 
-#[cfg(feature = "import")]
-pub mod import;
+#[cfg(feature = "json")]
+pub mod json;
 
 use std::ops::{Index, IndexMut};
 use std::fmt;

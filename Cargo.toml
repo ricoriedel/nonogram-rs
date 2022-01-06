@@ -11,4 +11,4 @@ serde = { version = "1.0.131", optional = true, features = ["derive"]}
 serde_json = { version = "1.0.72", optional = true }
 
 [features]
-import = ["serde", "serde_json"]
+json = ["serde", "serde_json"]
