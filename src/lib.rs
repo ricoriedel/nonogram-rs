@@ -105,15 +105,17 @@ impl Nonogram {
 impl fmt::Display for Nonogram {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         writeln!(f, "Size: {}x{}", self.cols, self.rows)?;
+        writeln!(f)?;
+
         for row in 0..self.rows {
             for col in 0..self.cols {
                 write!(f, "{}", match self[(col, row)] {
-                    Cell::Empty => ". ",
-                    Cell::Box => "# ",
+                    Cell::Empty => "▒▒",
+                    Cell::Box => "██",
                     Cell::Space => "  "
                 })?;
             }
-            writeln!(f, "")?;
+            writeln!(f)?;
         }
         Ok(())
     }
@@ -274,7 +276,7 @@ mod test {
         n[(1, 1)] = Cell::Box;
         n[(0, 1)] = Cell::Space;
 
-        let str = "Size: 2x2\n. # \n  # \n";
+        let str = "Size: 2x2\n\n▒▒██\n  ██\n";
 
         assert_eq!(format!("{}", n), str);
     }
