@@ -1,15 +1,12 @@
 # Don't forget to update:
+# - main.rs
 # - PKGBUILD
 
 [package]
 name = "nonogram-rs"
-description = """A fast and simple nonogram solver.
-License GPLv3+: GNU GPL version 3 or later <https://www.gnu.org/licenses/>
-This is free software: you are free to change and redistribute it.
-There is NO WARRANTY, to the extent permitted by law.
-"""
-authors = ["Copyright (C) 2021 Rico Riedel <rico.riedel@protonmail.ch>"]
-version = "1.1.0"
+description = "A fast and simple nonogram solver."
+authors = ["Rico Riedel <rico.riedel@protonmail.ch>"]
+version = "1.1.1"
 edition = "2021"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/ricoriedel/nonogram-rs"

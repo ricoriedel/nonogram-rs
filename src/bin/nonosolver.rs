@@ -25,7 +25,12 @@ enum Format {
 }
 
 #[derive(Parser)]
-#[clap(author = env ! ("CARGO_PKG_AUTHORS"), version = env ! ("CARGO_PKG_VERSION"), about = env ! ("CARGO_PKG_DESCRIPTION"))]
+#[clap(
+author = "Copyright (C) 2022 Rico Riedel <rico.riedel@protonmail.ch>",
+version = env ! ("CARGO_PKG_VERSION"),
+about = "License GPLv3+: GNU GPL version 3 or later <https://www.gnu.org/licenses/>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.")]
 struct Args {
     #[clap(long, default_value = "human", help = "Set output format", arg_enum)]
     out_format: Format
