@@ -1,6 +1,11 @@
 [package]
 name = "nonogram-rs"
-description = "A fast and lightweight library to solve nonograms."
+description = """A fast and simple nonogram solver.
+License GPLv3+: GNU GPL version 3 or later <https://www.gnu.org/licenses/>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+"""
+authors = ["Copyright (C) 2021 Rico Riedel <rico.riedel@protonmail.ch>"]
 version = "1.0.1"
 edition = "2021"
 license = "GPL-3.0-or-later"
@@ -9,7 +14,7 @@ repository = "https://github.com/Someone357/nonogram-rs"
 [dependencies]
 serde = { version = "1.0", optional = true, features = ["derive"]}
 serde_json = { version = "1.0", optional = true }
-clap = { version = "3.0", optional = true }
+clap = { version = "3.1", optional = true, features = ["derive"] }
 
 [[bin]]
 name = "nonosolver"

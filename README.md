@@ -6,13 +6,11 @@ This library is based on self designed algorithm which is explained in a separat
 ## Command Line Interface
 ### Compile
 ```shell
-cargo build --release --bin nonosolver --features="json cmd"
+cargo build --release --bin nonosolver --all-features
 ```
 ### Solve
 ```shell
-nonosolver --in-json '{"cols": [[3], [1], [2]], "rows": [[2], [1, 1], [1, 1]]}'
-# OR
-nonosolver --in-file 'layout.json'
+cat 'layout.json' | nonosolver
 ```
 ```
 Size: 3x3
@@ -21,9 +19,9 @@ Size: 3x3
 ██  ██
 ██  ██
 ```
-### Output as json
+### Solve (output as json)
 ```shell
-nonosolver --in-json '{"cols": [[3], [1], [2]], "rows": [[2], [1, 1], [1, 1]]}' --out-format 'json'
+cat 'layout.json' | nonosolver --out-format 'json'
 ```
 ```
 {"rows":[[1,1,2],[1,2,1],[1,2,1]]}
