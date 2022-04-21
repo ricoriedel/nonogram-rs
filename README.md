@@ -13,8 +13,8 @@ cargo build --release --bin nonosolver --all-features
 cat 'layout.json' | nonosolver
 ```
 ```
-Size: 3x3
-
+Width: 3
+Height: 3
 ████  
 ██  ██
 ██  ██
