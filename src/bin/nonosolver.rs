@@ -16,7 +16,7 @@
 
 use std::fs;
 use clap::{App, Arg, ArgMatches};
-use nonogram_rs::json::{Layout, RawNonogram};
+use nonogram_rs::serialize::{Layout, RawNonogram};
 use nonogram_rs::{Nonogram};
 
 fn main() {
@@ -52,7 +52,7 @@ There is NO WARRANTY, to the extent permitted by law.
         .get_matches();
 
     let json = get_json(&matches);
-    let layout = Layout::from_json(&json).expect("Json is malformed.");
+    let layout: Layout = serde_json::from_str(&json).expect("Json is malformed.");
     let nonogram = layout.solve().expect("The layout is invalid.");
     let output = get_output(&matches, nonogram);
 
@@ -71,7 +71,7 @@ fn get_json(matches: &ArgMatches) -> String {
 fn get_output(matches: &ArgMatches, nonogram: Nonogram) -> String {
     match matches.value_of("out-format").expect("--out-format is required.") {
         "human" => format!("{}", nonogram),
-        "json" => RawNonogram::from(nonogram).to_json(),
+        "json" => serde_json::to_string(&RawNonogram::from(nonogram)).unwrap(),
         _ => panic!("Unknown format.")
     }
 }

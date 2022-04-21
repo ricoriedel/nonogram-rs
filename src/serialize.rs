@@ -40,19 +40,9 @@ impl Layout {
         }
     }
 
-    /// Same as `serde_json::from_str`.
-    pub fn from_json(json: &str) -> Result<Layout, serde_json::Error> {
-        serde_json::from_str(json)
-    }
-
     /// Consumes the layout and solves the nonogram.
     pub fn solve(self) -> Result<Nonogram, ()> {
         solve(self.cols, self.rows)
-    }
-
-    /// Same as `serde_json::to_string`.
-    pub fn to_json(&self) -> String {
-        serde_json::to_string(self).unwrap()
     }
 }
 
@@ -85,16 +75,6 @@ impl RawNonogram {
         Self {
             rows
         }
-    }
-
-    /// Same as `serde_json::from_str`.
-    pub fn from_json(json: &str) -> Result<RawNonogram, serde_json::Error> {
-        serde_json::from_str(json)
-    }
-
-    /// Same as `serde_json::to_string`.
-    pub fn to_json(&self) -> String {
-        serde_json::to_string(self).unwrap()
     }
 }
 
@@ -153,33 +133,6 @@ mod test {
     }
 
     #[test]
-    fn layout_from_json() {
-        let cols = vec![vec![2, 4], vec![3, 2]];
-        let rows = vec![vec![4, 2], vec![1]];
-        let json = r#"
-            {
-                "cols": [[2, 4], [3, 2]],
-                "rows": [[4, 2], [1]]
-            }
-        "#;
-        let layout = Layout::from_json(json).unwrap();
-
-        assert_eq!(cols, layout.cols);
-        assert_eq!(rows, layout.rows);
-    }
-
-    #[test]
-    fn layout_to_json() {
-        let cols = vec![vec![2, 4], vec![3, 2]];
-        let rows = vec![vec![4, 2], vec![1]];
-        let layout = Layout::new(cols, rows);
-
-        let json = r#"{"cols":[[2,4],[3,2]],"rows":[[4,2],[1]]}"#;
-
-        assert_eq!(json, layout.to_json());
-    }
-
-    #[test]
     fn u8_from_cell() {
         assert_eq!(0, u8::from(Cell::Empty));
         assert_eq!(1, u8::from(Cell::Box));
@@ -200,25 +153,6 @@ mod test {
         let nonogram = RawNonogram::new(rows.clone());
 
         assert_eq!(rows, nonogram.rows);
-    }
-
-    #[test]
-    fn raw_nonogram_from_json() {
-        let rows = vec![vec![0, 2], vec![2, 1]];
-        let json = r#"{  "rows": [[0, 2], [2, 1]] }"#;
-        let nonogram = RawNonogram::from_json(json).unwrap();
-
-        assert_eq!(rows, nonogram.rows);
-    }
-
-    #[test]
-    fn raw_nonogram_to_json() {
-        let rows = vec![vec![0, 2], vec![2, 1]];
-        let nonogram = RawNonogram::new(rows.clone());
-
-        let json = r#"{"rows":[[0,2],[2,1]]}"#;
-
-        assert_eq!(json, nonogram.to_json());
     }
 
     #[test]

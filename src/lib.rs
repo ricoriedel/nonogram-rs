@@ -16,8 +16,8 @@
 
 mod algo;
 
-#[cfg(feature = "json")]
-pub mod json;
+#[cfg(feature = "serialize")]
+pub mod serialize;
 
 use std::ops::{Index, IndexMut};
 use std::fmt;
