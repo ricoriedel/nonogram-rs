@@ -1,3 +1,6 @@
+# Don't forget to update:
+# - PKGBUILD
+
 [package]
 name = "nonogram-rs"
 description = """A fast and simple nonogram solver.
@@ -6,10 +9,10 @@ This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 """
 authors = ["Copyright (C) 2021 Rico Riedel <rico.riedel@protonmail.ch>"]
-version = "1.0.1"
+version = "1.1.0"
 edition = "2021"
 license = "GPL-3.0-or-later"
-repository = "https://github.com/Someone357/nonogram-rs"
+repository = "https://github.com/ricoriedel/nonogram-rs"
 
 [dependencies]
 serde = { version = "1.0", optional = true, features = ["derive"]}
