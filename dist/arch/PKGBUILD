@@ -1,8 +1,8 @@
 # Maintainer: Rico Riedel <rico.riedel@protonmail.ch>
 
 pkgname='nonosolver-git'
-pkgver='1.1.0'
-pkgrel='2'
+pkgver='1.1.1'
+pkgrel='3'
 pkgdesc='A fast and simple nonogram solver.'
 arch=('x86_64')
 url='https://github.com/ricoriedel/nonogram-rs'
