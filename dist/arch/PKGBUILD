@@ -1,0 +1,36 @@
+# Maintainer: Rico Riedel <rico.riedel@protonmail.ch>
+
+pkgname='nonosolver-git'
+pkgver='1.0.1'
+pkgrel='1'
+pkgdesc='A fast and simple nonogram solver.'
+arch=('x86_64')
+url='https://github.com/ricoriedel/nonogram-rs'
+license=('GPL3')
+makedepends=('cargo')
+source=('git+https://www.github.com/ricoriedel/nonogram-rs.git')
+sha256sums=('SKIP')
+
+prepare() {
+    cd nonogram-rs
+    cargo fetch --locked --target "$CARCH-unknown-linux-gnu"
+}
+
+build() {
+    cd nonogram-rs
+    export RUSTUP_TOOLCHAIN=stable
+    export CARGO_TARGET_DIR=target
+    cargo build --bin nonosolver --frozen --release --all-features
+}
+
+check() {
+    cd nonogram-rs
+    export RUSTUP_TOOLCHAIN=stable
+    cargo test --frozen --all-features
+}
+
+package() {
+    cd nonogram-rs
+    install -Dm0644 -t "$pkgdir/usr/share/licenses/$pkgname/" 'LICENSE'
+    install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/nonosolver"
+}
