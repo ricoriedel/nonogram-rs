@@ -16,7 +16,7 @@
 
 use std::fs;
 use clap::{App, Arg, ArgMatches};
-use nonogram_rs::serialize::{Layout, RawNonogram};
+use nonogram_rs::serde::{Layout, RawNonogram};
 use nonogram_rs::{Nonogram};
 
 fn main() {

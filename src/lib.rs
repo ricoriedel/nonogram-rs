@@ -16,8 +16,8 @@
 
 mod algo;
 
-#[cfg(feature = "serialize")]
-pub mod serialize;
+#[cfg(feature = "serde")]
+pub mod serde;
 
 use std::ops::{Index, IndexMut};
 use std::fmt;

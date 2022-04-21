@@ -1,8 +1,8 @@
-#[cfg(feature = "serialize")]
-mod serialize {
+#[cfg(all(feature = "serde", feature = "serde_json"))]
+mod serde {
     use std::fs;
     use std::path::Path;
-    use nonogram_rs::serialize::Layout;
+    use nonogram_rs::serde::Layout;
 
     #[test]
     fn apple() {
