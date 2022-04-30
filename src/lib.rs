@@ -1,3 +1,5 @@
+pub mod line;
+
 use std::ops::{Index, IndexMut};
 
 /// A cell of a [Nonogram].
