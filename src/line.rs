@@ -3,7 +3,7 @@ use std::ops::{Index, IndexMut};
 
 /// A reference to a row or column of a [Nonogram].
 /// Used to reduce code duplication.
-trait LineMut<T>: IndexMut<usize, Output = Cell<T>> {
+pub trait LineMut<T>: IndexMut<usize, Output = Cell<T>> {
     fn len(&self) -> usize;
 }
 
@@ -68,6 +68,13 @@ impl<'a, T> IndexMut<usize> for RowMut<'a, T> {
 impl<'a, T> LineMut<T> for RowMut<'a, T> {
     fn len(&self) -> usize {
         self.nonogram.cols()
+    }
+}
+
+#[cfg(test)]
+impl<T> LineMut<T> for Vec<Cell<T>> {
+    fn len(&self) -> usize {
+        self.len()
     }
 }
 

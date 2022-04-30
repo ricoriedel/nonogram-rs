@@ -1,5 +1,7 @@
 pub mod line;
 
+mod algo;
+
 use std::ops::{Index, IndexMut};
 
 /// A cell of a [Nonogram].
