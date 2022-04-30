@@ -48,6 +48,20 @@ impl<T: Copy + PartialEq> Chain<T> {
             }
         }
     }
+
+    pub fn reduce_stop_by_left_box(&mut self, line: &impl LineMut<T>, start: usize) {
+        let stop = self.stop - self.len;
+
+        for i in start..stop {
+            match &line[i] {
+                Cell::Box { color } if color == &self.color => {
+                    self.stop = i + self.len;
+                    return;
+                }
+                _ => (),
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -138,5 +152,80 @@ mod test {
         c.reduce_start_by_right_box(&line, line.len());
 
         assert_eq!(0, c.start());
+    }
+
+    #[test]
+    fn chain_reduce_stop_by_left_box_none() {
+        let line = vec![Space, Empty, Space, Empty];
+        let mut c = Chain::new(7, 2, line.len());
+
+        c.reduce_stop_by_left_box(&line, 0);
+
+        assert_eq!(4, c.stop());
+    }
+
+    #[test]
+    fn chain_reduce_stop_by_left_box_one_box() {
+        let line = vec![Space, Box { color: 7 }, Space, Empty, Space, Empty];
+        let mut c = Chain::new(7, 3, line.len());
+
+        c.reduce_stop_by_left_box(&line, 0);
+
+        assert_eq!(4, c.stop());
+    }
+
+    #[test]
+    fn chain_reduce_stop_by_left_box_box_beyond_stop() {
+        let line = vec![Space, Box { color: 7 }, Space, Empty, Space, Empty];
+        let mut c = Chain::new(7, 3, line.len());
+
+        c.reduce_stop_by_left_box(&line, 2);
+
+        assert_eq!(6, c.stop());
+    }
+
+    #[test]
+    fn chain_reduce_stop_by_left_box_false_color() {
+        let line = vec![
+            Box { color: 8 },
+            Box { color: 7 },
+            Box { color: 1 },
+            Space,
+            Empty,
+            Space,
+        ];
+        let mut c = Chain::new(1, 3, line.len());
+
+        c.reduce_stop_by_left_box(&line, 0);
+
+        assert_eq!(5, c.stop());
+    }
+
+    #[test]
+    fn chain_reduce_stop_by_left_box_multiple_boxes() {
+        let line = vec![
+            Space,
+            Box { color: 7 },
+            Space,
+            Box { color: 7 },
+            Space,
+            Empty,
+            Space,
+        ];
+        let mut c = Chain::new(7, 2, line.len());
+
+        c.reduce_stop_by_left_box(&line, 0);
+
+        assert_eq!(3, c.stop());
+    }
+
+    #[test]
+    fn chain_reduce_stop_by_left_box_box_at_start() {
+        let line = vec![Space, Empty, Space, Box { color: 7 }, Space];
+        let mut c = Chain::new(7, 3, line.len());
+
+        c.reduce_stop_by_left_box(&line, 0);
+
+        assert_eq!(5, c.stop());
     }
 }
