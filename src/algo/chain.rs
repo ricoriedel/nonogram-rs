@@ -81,6 +81,25 @@ impl<T: Copy + PartialEq> Chain<T> {
             }
         }
     }
+
+    pub fn reduce_stop_by_adjacent(&mut self, line: &impl LineMut<T>) {
+        if self.stop == line.len() {
+            return;
+        }
+        for i in (self.start..self.stop).rev() {
+            match &line[i] {
+                Cell::Empty => {
+                    self.stop = i + 1;
+                    return;
+                }
+                Cell::Box { color } if color != &self.color => {
+                    self.stop = i + 1;
+                    return;
+                }
+                _ => (),
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -310,11 +329,87 @@ mod test {
         let mut c = Chain {
             color: 4,
             len: 2,
-            start: 1,
+            start: 0,
             stop: 2,
         };
         c.reduce_start_by_adjacent(&line);
 
-        assert_eq!(1, c.start());
+        assert_eq!(0, c.start());
+    }
+
+    #[test]
+    fn chain_reduce_stop_by_adjacent_fully_at_right() {
+        let line = vec![Empty, Empty, Box { color: 4 }, Box { color: 4 }];
+        let mut c = Chain {
+            color: 4,
+            len: 2,
+            start: 0,
+            stop: line.len(),
+        };
+        c.reduce_stop_by_adjacent(&line);
+
+        assert_eq!(line.len(), c.stop());
+    }
+
+    #[test]
+    fn chain_reduce_stop_by_adjacent_none() {
+        let line = vec![Empty, Empty, Empty, Empty, Empty];
+        let mut c = Chain {
+            color: 4,
+            len: 2,
+            start: 0,
+            stop: line.len(),
+        };
+        c.reduce_stop_by_adjacent(&line);
+
+        assert_eq!(line.len(), c.stop());
+    }
+
+    #[test]
+    fn chain_reduce_stop_by_adjacent_some_boxes() {
+        let line = vec![Empty, Empty, Box { color: 4 }, Box { color: 4 }];
+        let mut c = Chain {
+            color: 4,
+            len: 2,
+            start: 0,
+            stop: 3,
+        };
+        c.reduce_stop_by_adjacent(&line);
+
+        assert_eq!(2, c.stop());
+    }
+
+    #[test]
+    fn chain_reduce_stop_by_adjacent_some_different_colored_boxes() {
+        let line = vec![Empty, Empty, Box { color: 2 }, Box { color: 1 }];
+        let mut c = Chain {
+            color: 4,
+            len: 2,
+            start: 0,
+            stop: 3,
+        };
+        c.reduce_stop_by_adjacent(&line);
+
+        assert_eq!(3, c.stop());
+    }
+
+    #[test]
+    fn chain_reduce_stop_by_adjacent_boxes_until_start() {
+        let line = vec![
+            Empty,
+            Empty,
+            Box { color: 4 },
+            Box { color: 4 },
+            Box { color: 4 },
+        ];
+        let mut c = Chain {
+            color: 4,
+            len: 2,
+            start: 2,
+            stop: 4,
+        };
+        c.reduce_stop_by_adjacent(&line);
+
+        assert_eq!(4, c.stop());
     }
 }
