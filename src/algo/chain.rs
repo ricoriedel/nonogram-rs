@@ -63,42 +63,48 @@ impl<T: Copy + PartialEq> Chain<T> {
         }
     }
 
-    pub fn reduce_start_by_adjacent(&mut self, line: &impl LineMut<T>) {
+    pub fn reduce_start_by_adjacent(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
         if self.start == 0 {
-            return;
+            return Ok(());
         }
-        for i in self.start..self.stop {
+        let stop = self.stop - self.len;
+
+        for i in self.start..=stop {
             match &line[i - 1] {
                 Cell::Empty => {
                     self.start = i;
-                    return;
+                    return Ok(());
                 }
                 Cell::Box { color } if color != &self.color => {
                     self.start = i;
-                    return;
+                    return Ok(());
                 }
                 _ => (),
             }
         }
+        Err(())
     }
 
-    pub fn reduce_stop_by_adjacent(&mut self, line: &impl LineMut<T>) {
+    pub fn reduce_stop_by_adjacent(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
         if self.stop == line.len() {
-            return;
+            return Ok(());
         }
-        for i in (self.start..self.stop).rev() {
+        let start = self.start + self.len;
+
+        for i in (start..=self.stop).rev() {
             match &line[i] {
                 Cell::Empty => {
-                    self.stop = i + 1;
-                    return;
+                    self.stop = i;
+                    return Ok(());
                 }
                 Cell::Box { color } if color != &self.color => {
-                    self.stop = i + 1;
-                    return;
+                    self.stop = i;
+                    return Ok(());
                 }
                 _ => (),
             }
         }
+        Err(())
     }
 }
 
@@ -276,7 +282,7 @@ mod test {
             start: 0,
             stop: 0,
         };
-        c.reduce_start_by_adjacent(&line);
+        c.reduce_start_by_adjacent(&line).unwrap();
 
         assert_eq!(0, c.start());
     }
@@ -290,21 +296,21 @@ mod test {
             start: 2,
             stop: line.len(),
         };
-        c.reduce_start_by_adjacent(&line);
+        c.reduce_start_by_adjacent(&line).unwrap();
 
         assert_eq!(2, c.start());
     }
 
     #[test]
     fn chain_reduce_start_by_adjacent_some_boxes() {
-        let line = vec![Box { color: 4 }, Box { color: 4 }, Empty, Empty];
+        let line = vec![Box { color: 4 }, Box { color: 4 }, Empty, Empty, Empty];
         let mut c = Chain {
             color: 4,
             len: 2,
             start: 1,
             stop: line.len(),
         };
-        c.reduce_start_by_adjacent(&line);
+        c.reduce_start_by_adjacent(&line).unwrap();
 
         assert_eq!(3, c.start());
     }
@@ -318,23 +324,33 @@ mod test {
             start: 1,
             stop: line.len(),
         };
-        c.reduce_start_by_adjacent(&line);
+        c.reduce_start_by_adjacent(&line).unwrap();
 
         assert_eq!(1, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_adjacent_boxes_until_stop() {
+    fn chain_reduce_start_by_adjacent_boxes_err() {
         let line = vec![Box { color: 4 }, Box { color: 4 }, Empty, Empty];
         let mut c = Chain {
             color: 4,
             len: 2,
-            start: 0,
-            stop: 2,
+            start: 1,
+            stop: line.len(),
         };
-        c.reduce_start_by_adjacent(&line);
+        assert!(c.reduce_start_by_adjacent(&line).is_err());
+    }
 
-        assert_eq!(0, c.start());
+    #[test]
+    fn chain_reduce_start_by_adjacent_boxes_err_by_stop() {
+        let line = vec![Box { color: 4 }, Box { color: 4 }, Empty, Empty, Empty];
+        let mut c = Chain {
+            color: 4,
+            len: 2,
+            start: 1,
+            stop: 4,
+        };
+        assert!(c.reduce_start_by_adjacent(&line).is_err());
     }
 
     #[test]
@@ -346,7 +362,7 @@ mod test {
             start: 0,
             stop: line.len(),
         };
-        c.reduce_stop_by_adjacent(&line);
+        c.reduce_stop_by_adjacent(&line).unwrap();
 
         assert_eq!(line.len(), c.stop());
     }
@@ -358,43 +374,43 @@ mod test {
             color: 4,
             len: 2,
             start: 0,
-            stop: line.len(),
+            stop: 4,
         };
-        c.reduce_stop_by_adjacent(&line);
+        c.reduce_stop_by_adjacent(&line).unwrap();
 
-        assert_eq!(line.len(), c.stop());
+        assert_eq!(4, c.stop());
     }
 
     #[test]
     fn chain_reduce_stop_by_adjacent_some_boxes() {
-        let line = vec![Empty, Empty, Box { color: 4 }, Box { color: 4 }];
+        let line = vec![Empty, Empty, Empty, Box { color: 4 }, Box { color: 4 }];
         let mut c = Chain {
             color: 4,
             len: 2,
             start: 0,
-            stop: 3,
+            stop: 4,
         };
-        c.reduce_stop_by_adjacent(&line);
+        c.reduce_stop_by_adjacent(&line).unwrap();
 
         assert_eq!(2, c.stop());
     }
 
     #[test]
     fn chain_reduce_stop_by_adjacent_some_different_colored_boxes() {
-        let line = vec![Empty, Empty, Box { color: 2 }, Box { color: 1 }];
+        let line = vec![Empty, Empty, Empty, Box { color: 2 }, Box { color: 1 }];
         let mut c = Chain {
             color: 4,
             len: 2,
             start: 0,
-            stop: 3,
+            stop: 4,
         };
-        c.reduce_stop_by_adjacent(&line);
+        c.reduce_stop_by_adjacent(&line).unwrap();
 
-        assert_eq!(3, c.stop());
+        assert_eq!(4, c.stop());
     }
 
     #[test]
-    fn chain_reduce_stop_by_adjacent_boxes_until_start() {
+    fn chain_reduce_stop_by_adjacent_boxes_err() {
         let line = vec![
             Empty,
             Empty,
@@ -405,11 +421,28 @@ mod test {
         let mut c = Chain {
             color: 4,
             len: 2,
-            start: 2,
+            start: 0,
             stop: 4,
         };
-        c.reduce_stop_by_adjacent(&line);
+        assert!(c.reduce_stop_by_adjacent(&line).is_err());
+    }
 
-        assert_eq!(4, c.stop());
+    #[test]
+    fn chain_reduce_stop_by_adjacent_boxes_err_by_start() {
+        let line = vec![
+            Empty,
+            Empty,
+            Empty,
+            Box { color: 4 },
+            Box { color: 4 },
+            Box { color: 4 },
+        ];
+        let mut c = Chain {
+            color: 4,
+            len: 2,
+            start: 1,
+            stop: 5,
+        };
+        assert!(c.reduce_stop_by_adjacent(&line).is_err());
     }
 }
