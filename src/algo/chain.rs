@@ -106,6 +106,30 @@ impl<T: Copy + PartialEq> Chain<T> {
         }
         Err(())
     }
+
+    pub fn reduce_start_by_gabs(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
+        let mut count = 0;
+
+        for i in self.start..self.stop {
+            match &line[i] {
+                Cell::Space => {
+                    count = 0;
+                }
+                Cell::Box { color } if color != &self.color => {
+                    count = 0;
+                }
+                _ => {
+                    count += 1;
+
+                    if count == self.len {
+                        self.start = i + 1 - self.len;
+                        return Ok(());
+                    }
+                }
+            };
+        }
+        Err(())
+    }
 }
 
 #[cfg(test)]
@@ -444,5 +468,94 @@ mod test {
             stop: 5,
         };
         assert!(c.reduce_stop_by_adjacent(&line).is_err());
+    }
+
+    #[test]
+    fn chain_reduce_start_by_gabs_nothing() {
+        let line = vec![Empty, Empty, Empty, Empty];
+        let mut c = Chain {
+            color: 4,
+            len: 2,
+            start: 2,
+            stop: line.len(),
+        };
+        c.reduce_start_by_gabs(&line).unwrap();
+
+        assert_eq!(2, c.start());
+    }
+
+    #[test]
+    fn chain_reduce_start_by_gabs_spaces() {
+        let line = vec![Empty, Empty, Space, Empty, Space, Empty, Empty, Empty];
+        let mut c = Chain {
+            color: 4,
+            len: 2,
+            start: 1,
+            stop: line.len(),
+        };
+        c.reduce_start_by_gabs(&line).unwrap();
+
+        assert_eq!(5, c.start());
+    }
+
+    #[test]
+    fn chain_reduce_start_by_gabs_boxes() {
+        let line = vec![Empty, Empty, Box { color: 4 }, Empty, Empty];
+        let mut c = Chain {
+            color: 4,
+            len: 2,
+            start: 1,
+            stop: line.len(),
+        };
+        c.reduce_start_by_gabs(&line).unwrap();
+
+        assert_eq!(1, c.start());
+    }
+
+    #[test]
+    fn chain_reduce_start_by_gabs_different_colored_boxes() {
+        let line = vec![
+            Empty,
+            Empty,
+            Box { color: 2 },
+            Empty,
+            Box { color: 8 },
+            Empty,
+            Empty,
+            Empty,
+        ];
+        let mut c = Chain {
+            color: 4,
+            len: 2,
+            start: 1,
+            stop: line.len(),
+        };
+        c.reduce_start_by_gabs(&line).unwrap();
+
+        assert_eq!(5, c.start());
+    }
+
+    #[test]
+    fn chain_reduce_start_by_gabs_err() {
+        let line = vec![Empty, Empty, Box { color: 2 }, Empty];
+        let mut c = Chain {
+            color: 4,
+            len: 2,
+            start: 1,
+            stop: line.len(),
+        };
+        assert!(c.reduce_start_by_gabs(&line).is_err());
+    }
+
+    #[test]
+    fn chain_reduce_start_by_gabs_err_by_stop() {
+        let line = vec![Empty, Empty, Box { color: 2 }, Empty, Empty];
+        let mut c = Chain {
+            color: 4,
+            len: 2,
+            start: 1,
+            stop: 4,
+        };
+        assert!(c.reduce_start_by_gabs(&line).is_err());
     }
 }
