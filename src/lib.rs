@@ -4,6 +4,10 @@ mod algo;
 
 use std::ops::{Index, IndexMut};
 
+#[cfg(feature = "serde")]
+use serde::{Serialize, Deserialize};
+use crate::algo::Branch;
+
 /// A cell of a [Nonogram].
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Cell<T> {
@@ -87,6 +91,22 @@ impl<T> IndexMut<(usize, usize)> for Nonogram<T> {
     }
 }
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Layout<T> {
+    pub cols: Vec<Vec<(T, usize)>>,
+    pub rows: Vec<Vec<(T, usize)>>,
+}
+
+impl<T: Copy + PartialEq> Layout<T> {
+    pub fn new(cols: Vec<Vec<(T, usize)>>, rows: Vec<Vec<(T, usize)>>) -> Self {
+        Self { cols, rows }
+    }
+
+    pub fn solve(self) -> Result<Nonogram<T>, ()> {
+        Branch::new(self.cols, self.rows).solve()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -128,5 +148,18 @@ mod test {
         let n: Nonogram<()> = Nonogram::new(9, 5);
 
         n[(0, 5)];
+    }
+
+    #[test]
+    fn layout_solve() {
+        let cols = vec![
+            vec![('a', 1)]
+        ];
+        let rows = vec![
+            vec![('a', 1)]
+        ];
+        let layout = Layout::new(cols, rows);
+
+        assert!(layout.solve().is_ok());
     }
 }
