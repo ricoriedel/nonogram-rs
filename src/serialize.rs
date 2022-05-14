@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use crate::{Cell, Nonogram};
 
 /// Serializable nonogram which might be malformed.
-/// Convert to a regular [Nonogram] before used to ensure the data is valid.
+/// Convert to a regular [Nonogram] before use to ensure the data is valid.
 #[derive(Serialize, Deserialize)]
 pub struct RawNonogram<T> {
     pub rows: Vec<Vec<Cell<T>>>
