@@ -4,7 +4,7 @@ use crate::line::LineMut;
 use crate::Cell;
 
 /// Metadata about multiple [Chain]s one the same line.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Layout<T> {
     data: Vec<Chain<T>>,
     flagged: bool,
@@ -55,6 +55,21 @@ impl<T: Copy + PartialEq> Layout<T> {
     pub fn write(&self, line: &mut impl LineMut<T>, flags: &mut impl Flags) {
         self.write_boxes(line, flags);
         self.write_spaces(line, flags);
+    }
+
+    /// Searches an unsolved chain and returns a free cell with the color of the chain.
+    pub fn find_unsolved(&self) -> Option<(T, usize)> {
+        for chain in &self.data {
+            if !chain.solved() {
+                // As long as a chain is not solved, the first
+                // and last box inside the range must be empty.
+                // Also, it can only be this color as all chains to
+                // the left are solved which means they can't overlap.
+
+                return Some((chain.color(), chain.start()));
+            }
+        }
+        None
     }
 
     /// Updates the range start of all chains.
@@ -478,5 +493,42 @@ mod test {
         assert!(flags[0]);
         assert!(flags[1]);
         assert!(!flags[2]);
+    }
+
+    #[test]
+    fn layout_find_unsolved_none() {
+        let line = &mut vec![
+            Box { color: 'a' },
+            Empty,
+            Box { color: 'a' },
+        ];
+        let data = vec![
+            ('a', 1),
+            ('a', 1),
+        ];
+        let mut layout = Layout::new(data, line.len());
+        layout.update(line).unwrap();
+
+        assert!(matches!(layout.find_unsolved(), None));
+    }
+
+    #[test]
+    fn layout_find_unsolved_some() {
+        let line = &mut vec![
+            Space,
+            Empty,
+            Empty,
+            Empty,
+            Empty,
+            Box { color: 'b' },
+        ];
+        let data = vec![
+            ('a', 2),
+            ('b', 1),
+        ];
+        let mut layout = Layout::new(data, line.len());
+        layout.update(line).unwrap();
+
+        assert!(matches!(layout.find_unsolved(), Some(('a', 1))));
     }
 }

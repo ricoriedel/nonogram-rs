@@ -2,7 +2,7 @@ use crate::line::LineMut;
 use crate::Cell;
 
 /// Metadata about a chain of [Cell::Box]s.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Chain<T> {
     color: T,
     len: usize,
@@ -69,6 +69,11 @@ impl<T: Copy + PartialEq> Chain<T> {
         } else {
             self.stop - self.len
         }
+    }
+
+    /// Checks if the exact location of the chain has been found.
+    pub fn solved(&self) -> bool {
+        self.stop - self.start == self.len
     }
 
     /// Reduces the start by pulling it to a box on the right.
@@ -252,6 +257,12 @@ mod test {
         let c = Chain::new(0, 4, 0, 8);
 
         assert_eq!(3, c.last_stop(true));
+    }
+
+    #[test]
+    fn chain_solved() {
+        assert!(Chain::new((), 3, 6, 9).solved());
+        assert!(!Chain::new((), 4, 2, 7).solved());
     }
 
     #[test]
