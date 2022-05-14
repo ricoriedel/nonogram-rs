@@ -2,6 +2,7 @@ use crate::line::LineMut;
 use crate::Cell;
 
 /// Metadata about a chain of [Cell::Box]s.
+#[derive(Debug)]
 pub struct Chain<T> {
     color: T,
     len: usize,
@@ -9,7 +10,7 @@ pub struct Chain<T> {
     stop: usize,
 }
 
-impl<T: Copy + PartialEq> Chain<T> {
+impl<T> Chain<T> {
     /// Constructs a new chain.
     pub fn new(color: T, len: usize, start: usize, stop: usize) -> Self {
         Self {
@@ -19,7 +20,9 @@ impl<T: Copy + PartialEq> Chain<T> {
             stop,
         }
     }
+}
 
+impl<T: Copy + PartialEq> Chain<T> {
     /// Returns the color.
     pub fn color(&self) -> T {
         self.color
@@ -35,9 +38,37 @@ impl<T: Copy + PartialEq> Chain<T> {
         self.start
     }
 
+    /// Sets the start of the possible range.
+    pub fn set_start(&mut self, start: usize) {
+        self.start = start;
+    }
+
+    /// Get the first *possible* start of the chain to the right.
+    pub fn first_start(&self, same_color: bool) -> usize {
+        if same_color {
+            self.start + self.len + 1
+        } else {
+            self.start + self.len
+        }
+    }
+
     /// Returns the stop of the possible range.
     pub fn stop(&self) -> usize {
         self.stop
+    }
+
+    /// Sets the stop of the possible range.
+    pub fn set_stop(&mut self, stop: usize) {
+        self.stop = stop;
+    }
+
+    /// Get the last *possible* stop of the chain to the left.
+    pub fn last_stop(&self, same_color: bool) -> usize {
+        if same_color {
+            self.stop - self.len - 1
+        } else {
+            self.stop - self.len
+        }
     }
 
     /// Reduces the start by pulling it to a box on the right.
@@ -81,15 +112,11 @@ impl<T: Copy + PartialEq> Chain<T> {
 
         for i in self.start..=stop {
             match &line[i - 1] {
-                Cell::Empty => {
+                Cell::Box { color } if color == &self.color => (),
+                _ => {
                     self.start = i;
                     return Ok(());
-                }
-                Cell::Box { color } if color != &self.color => {
-                    self.start = i;
-                    return Ok(());
-                }
-                _ => (),
+                },
             }
         }
         Err(())
@@ -104,15 +131,11 @@ impl<T: Copy + PartialEq> Chain<T> {
 
         for i in (start..=self.stop).rev() {
             match &line[i] {
-                Cell::Empty => {
+                Cell::Box { color } if color == &self.color => (),
+                _ => {
                     self.stop = i;
                     return Ok(());
-                }
-                Cell::Box { color } if color != &self.color => {
-                    self.stop = i;
-                    return Ok(());
-                }
-                _ => (),
+                },
             }
         }
         Err(())
@@ -177,12 +200,58 @@ mod test {
 
     #[test]
     fn chain_new() {
-        let c = Chain::new(4, 2, 0, 7);
+        let c = Chain::new(4, 2, 3, 7);
 
         assert_eq!(4, c.color());
         assert_eq!(2, c.len());
-        assert_eq!(0, c.start());
+        assert_eq!(3, c.start());
         assert_eq!(7, c.stop());
+    }
+
+    #[test]
+    fn chain_set_start() {
+        let mut c = Chain::new(0, 0, 4, 0);
+
+        c.set_start(2);
+
+        assert_eq!(2, c.start());
+    }
+
+    #[test]
+    fn chain_first_start_same_color_false() {
+        let c = Chain::new(0, 2, 3, 0);
+
+        assert_eq!(5, c.first_start(false));
+    }
+
+    #[test]
+    fn chain_first_start_same_color_true() {
+        let c = Chain::new(0, 2, 3, 0);
+
+        assert_eq!(6, c.first_start(true));
+    }
+
+    #[test]
+    fn chain_set_stop() {
+        let mut c = Chain::new(0, 0, 0, 2);
+
+        c.set_stop(6);
+
+        assert_eq!(6, c.stop());
+    }
+
+    #[test]
+    fn chain_last_stop_same_color_false() {
+        let c = Chain::new(0, 2, 0, 7);
+
+        assert_eq!(5, c.last_stop(false));
+    }
+
+    #[test]
+    fn chain_last_stop_same_color_true() {
+        let c = Chain::new(0, 4, 0, 8);
+
+        assert_eq!(3, c.last_stop(true));
     }
 
     #[test]
@@ -376,6 +445,16 @@ mod test {
     }
 
     #[test]
+    fn chain_reduce_start_by_adjacent_some_spaces() {
+        let line = vec![Space, Space, Empty, Empty];
+        let mut c = Chain::new(4, 2, 1, line.len());
+
+        c.reduce_start_by_adjacent(&line).unwrap();
+
+        assert_eq!(1, c.start());
+    }
+
+    #[test]
     fn chain_reduce_start_by_adjacent_boxes_err() {
         let line = vec![Box { color: 4 }, Box { color: 4 }, Empty, Empty];
         let mut c = Chain::new(4, 2, 1, line.len());
@@ -424,6 +503,16 @@ mod test {
     #[test]
     fn chain_reduce_stop_by_adjacent_some_different_colored_boxes() {
         let line = vec![Empty, Empty, Empty, Box { color: 2 }, Box { color: 1 }];
+        let mut c = Chain::new(4, 2, 0, 4);
+
+        c.reduce_stop_by_adjacent(&line).unwrap();
+
+        assert_eq!(4, c.stop());
+    }
+
+    #[test]
+    fn chain_reduce_stop_by_adjacent_some_spaces() {
+        let line = vec![Empty, Empty, Empty, Space, Space];
         let mut c = Chain::new(4, 2, 0, 4);
 
         c.reduce_stop_by_adjacent(&line).unwrap();
