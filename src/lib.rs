@@ -2,14 +2,22 @@ pub mod line;
 
 mod algo;
 
+#[cfg(feature = "serde")]
+mod serialize;
+
 use std::ops::{Index, IndexMut};
+use crate::algo::Branch;
 
 #[cfg(feature = "serde")]
 use serde::{Serialize, Deserialize};
-use crate::algo::Branch;
+
+#[cfg(feature = "serde")]
+pub use serialize::RawNonogram;
+
 
 /// A cell of a [Nonogram].
 #[derive(Copy, Clone, PartialEq, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Cell<T> {
     /// An unknown value.
     Empty,
