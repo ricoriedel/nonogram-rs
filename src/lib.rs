@@ -5,7 +5,7 @@ mod algo;
 use std::ops::{Index, IndexMut};
 
 /// A cell of a [Nonogram].
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Cell<T> {
     /// An unknown value.
     Empty,

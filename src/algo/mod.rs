@@ -1,1 +1,2 @@
-mod chain;
+pub mod chain;
+pub mod line;
