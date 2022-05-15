@@ -54,11 +54,7 @@ cat layout.json | ./nonoslver solve | ./nonosolver show
 ```
 
 #### Result
-```
-🟨🟥  
-  🟥  
-🟨🟥🟥
-```
+![](img/result.svg)
 
 #### Colors
 The following colors are supported by the CLI.
