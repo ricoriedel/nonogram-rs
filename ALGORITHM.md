@@ -62,23 +62,45 @@ See: `nonogram_rs::algo::chain::Chain::reduce_start_by_gabs`
 ![](img/reduce-start-by-gabs.svg)
 
 ## Multiple chains
-So far we only looked at how to apply theses techniques to one chain.
+So far we only looked at how to apply these techniques to one chain.
 Now comes the most difficult part: piecing them together.
 There is an example below to help you understand the process.
 
 We start by iterating all chains of this line, **but in reverse**.
 This is required because to apply technique one, we need the start of the chain on the right.
 If we start from the left, then the chain on the right still has an outdated range start.
-We can't know where the right chain starts, if we have not taken a look at it yet.
+We can't know where the right chain starts if we have not taken a look at it yet.
 
 With that out of the way, we can apply all techniques to each chain.
 Except that there is yet another catch.
-In most cases all chains will end up with a range start at the very beginning of the line.
+In most cases, all chains will end up with a range starting at the very beginning of the line.
 To avoid this, we need to check that the leftmost position of the current chain 
 does not overlap with the range of the chain on the right.
-If it does, we need to reevaluate the right chain but using a range start which respects the current chain.
+If it does, we need to reevaluate the right chain but use a range start that respects the current chain.
 It might be required to backtrack multiple chains.
 
 See: `nonogram_rs::algo::line::Layout::update_starts`
 
 ![](img/reduce-starts.svg)
+
+## Filling in the nonogram
+After we updated all ranges, we can start filling in the nonogram.
+This is rather simple:
+* Every cell which is outside all ranges must be a space.
+* The overlap of the leftmost and rightmost positions of a chain are boxes.
+
+![](img/filling.svg)
+
+## Solving the nonogram
+We have narrowed down the location of each chain and filled in the nonogram.
+Now we repeat this process until no more improvement can be archived.
+This can be the case for two reasons, either we solved it, or it is a nonogram that requires recursion.
+
+If it does require recursion, we look for the first chain which has not been resolved.
+Unless a chain is resolved, the first and last cells are always empty.
+And because we look for the first cell of the first unresolved chain, it can only be in the range of this chain.
+This means that, if the cell is a box, it must have the same color as the chain.
+
+Now we fork the nonogram, one version will have a space, one a box with the color of the chain.
+Then we try to solve the first, if that fails we try the second.
+Note that multiple layers of recursion can be necessary.
