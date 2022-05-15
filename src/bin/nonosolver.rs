@@ -2,7 +2,7 @@ use std::io::{stdin, stdout, Write};
 use nonogram_rs::*;
 
 use clap::{Parser, Subcommand};
-use crossterm::QueueableCommand;
+use crossterm::{ExecutableCommand, QueueableCommand};
 use crossterm::style::{Color, Print, SetForegroundColor};
 
 #[derive(Parser)]
@@ -44,6 +44,9 @@ fn solve() -> Result<(), &'static str> {
     let raw: RawNonogram<char> = nonogram.into();
 
     serde_json::to_writer(stdout(),  &raw).unwrap();
+
+    // Sometimes flush does not suffice.
+    stdout().execute(Print("\n")).unwrap();
 
     Ok(())
 }
