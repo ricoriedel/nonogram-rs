@@ -60,3 +60,25 @@ How to implement:
 See: `nonogram_rs::algo::chain::Chain::reduce_start_by_gabs`
 
 ![](img/reduce-start-by-gabs.svg)
+
+## Multiple chains
+So far we only looked at how to apply theses techniques to one chain.
+Now comes the most difficult part: piecing them together.
+There is an example below to help you understand the process.
+
+We start by iterating all chains of this line, **but in reverse**.
+This is required because to apply technique one, we need the start of the chain on the right.
+If we start from the left, then the chain on the right still has an outdated range start.
+We can't know where the right chain starts, if we have not taken a look at it yet.
+
+With that out of the way, we can apply all techniques to each chain.
+Except that there is yet another catch.
+In most cases all chains will end up with a range start at the very beginning of the line.
+To avoid this, we need to check that the leftmost position of the current chain 
+does not overlap with the range of the chain on the right.
+If it does, we need to reevaluate the right chain but using a range start which respects the current chain.
+It might be required to backtrack multiple chains.
+
+See: `nonogram_rs::algo::line::Layout::update_starts`
+
+![](img/reduce-starts.svg)
