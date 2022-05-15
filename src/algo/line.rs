@@ -19,6 +19,7 @@ impl<T> Layout<T> {
     /// Constructs a new layout.
     pub fn new(numbers: Vec<(T, usize)>, line_length: usize) -> Self {
         let data = numbers.into_iter()
+            .filter(|num| num.1 > 0)
             .map(|num| Chain::new(num.0, num.1, 0, line_length))
             .collect();
 
@@ -530,5 +531,25 @@ mod test {
         layout.update(line).unwrap();
 
         assert!(matches!(layout.find_unsolved(), Some(('a', 1))));
+    }
+
+    #[test]
+    fn layout_new_zeros() {
+        let line = &mut vec![
+            Empty,
+            Empty,
+            Empty,
+        ];
+        let data = vec![
+            ('a', 1),
+            ('a', 0),
+            ('a', 0),
+            ('a', 0),
+            ('a', 0),
+            ('a', 1),
+        ];
+        let mut layout = Layout::new(data, line.len());
+
+        assert!(layout.update(line).is_ok());
     }
 }
