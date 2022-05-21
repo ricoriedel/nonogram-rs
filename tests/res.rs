@@ -19,6 +19,22 @@ mod demo {
     }
 
     #[test]
+    fn palm() {
+        let json = include_str!("../res/palm.json");
+        let layout: Layout<char> = serde_json::from_str(json).unwrap();
+
+        assert!(layout.solve().is_ok());
+    }
+
+    #[test]
+    fn palm_color() {
+        let json = include_str!("../res/palm-color.json");
+        let layout: Layout<char> = serde_json::from_str(json).unwrap();
+
+        assert!(layout.solve().is_ok());
+    }
+
+    #[test]
     fn colors() {
         let json = include_str!("../res/colors.json");
         let layout: Layout<char> = serde_json::from_str(json).unwrap();

@@ -8,10 +8,10 @@ Features:
 * De/serializing a layout (requires `serde` feature)
 * De/serializing a nonogram (requires `serde` feature)
 
-Examples on how to use this library can be found in the `tests/` directory.
+Examples of how to use this library can be found in the `tests/` directory.
 
-## Command line interface
-This library includes a CLI called `nonosolver` as binary target.
+## Command-line interface
+This library includes a CLI called `nonosolver` as a binary target.
 
 ```shell
 cargo build --bin nonosolver --all-features
