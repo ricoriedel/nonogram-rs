@@ -41,9 +41,8 @@ fn main() -> Result<(), &'static str> {
 fn solve() -> Result<(), &'static str> {
     let layout: Layout<char> = serde_json::from_reader(stdin()).map_err(|_| BAD_LAYOUT)?;
     let nonogram = layout.solve().map_err(|_| INVALID_LAYOUT)?;
-    let raw: RawNonogram<char> = nonogram.into();
 
-    serde_json::to_writer(stdout(),  &raw).unwrap();
+    serde_json::to_writer(stdout(),  &nonogram).unwrap();
 
     // Sometimes flush does not suffice.
     stdout().execute(Print("\n")).unwrap();
@@ -52,8 +51,7 @@ fn solve() -> Result<(), &'static str> {
 }
 
 fn show() -> Result<(), &'static str> {
-    let raw: RawNonogram<char> = serde_json::from_reader(stdin()).map_err(|_| BAD_NONOGRAM)?;
-    let nonogram: Nonogram<char> = raw.try_into().map_err(|_| BAD_NONOGRAM)?;
+    let nonogram: Nonogram<char> = serde_json::from_reader(stdin()).map_err(|_| BAD_NONOGRAM)?;
 
     for row in 0..nonogram.rows() {
         for col in 0..nonogram.cols() {

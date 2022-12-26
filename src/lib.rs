@@ -11,10 +11,6 @@ use crate::algo::Branch;
 #[cfg(feature = "serde")]
 use serde::{Serialize, Deserialize};
 
-#[cfg(feature = "serde")]
-pub use serialize::RawNonogram;
-
-
 /// A cell of a [Nonogram].
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -78,6 +74,41 @@ impl<T> Nonogram<T> {
         assert!(pos.1 < self.rows);
 
         pos.1 * self.cols + pos.0
+    }
+}
+
+impl<T: Copy> From<&Vec<Vec<Cell<T>>>> for Nonogram<T> {
+    fn from(value: &Vec<Vec<Cell<T>>>) -> Self {
+        let row_len = value.len();
+        let col_len = value.iter()
+            .map(Vec::len)
+            .max()
+            .unwrap_or(0);
+
+        let mut nonogram = Nonogram::new(col_len, row_len);
+
+        for row in 0..row_len {
+            for col in 0..col_len {
+                nonogram[(col, row)] = value[row][col];
+            }
+        }
+        nonogram
+    }
+}
+
+impl<T: Copy> From<&Nonogram<T>> for Vec<Vec<Cell<T>>> {
+    fn from(nonogram: &Nonogram<T>) -> Self {
+        let mut rows: Vec<Vec<Cell<T>>> = Vec::new();
+
+        for row_i in 0..nonogram.rows() {
+            let mut row = Vec::new();
+
+            for col_i in 0..nonogram.cols() {
+                row.push(nonogram[(col_i, row_i)]);
+            }
+            rows.push(row);
+        }
+        rows
     }
 }
 
