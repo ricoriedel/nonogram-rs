@@ -2,7 +2,7 @@
 use serde::{Serialize, Deserialize};
 
 use crate::algo::Branch;
-use crate::Nonogram;
+use crate::{Error, Nonogram, Token};
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Item<T> {
@@ -27,8 +27,8 @@ impl<T: Copy + PartialEq> Layout<T> {
         Self { cols, rows }
     }
 
-    pub fn solve(&self) -> Result<Nonogram<T>, ()> {
-        Branch::build(&self.cols, &self.rows).solve()
+    pub fn solve(&self, token: impl Token) -> Result<Nonogram<T>, Error> {
+        Branch::build(&self.cols, &self.rows).solve(token)
     }
 }
 
@@ -46,6 +46,6 @@ mod test {
         ];
         let layout = Layout::new(cols, rows);
 
-        assert!(layout.solve().is_ok());
+        assert!(layout.solve(()).is_ok());
     }
 }

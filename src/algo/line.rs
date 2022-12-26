@@ -1,6 +1,6 @@
 use crate::algo::chain::Chain;
 use crate::line::Line;
-use crate::{Cell, Item};
+use crate::{Cell, Error, Item};
 
 /// Metadata about multiple [Chain]s one the same line.
 #[derive(Clone, Debug)]
@@ -41,7 +41,7 @@ impl<T: Copy> Layout<T> {
 
 impl<T: Copy + PartialEq> Layout<T> {
     /// Updates the metadata about the chains based on new clues.
-    pub fn update(&mut self, line: &impl Line<T>) -> Result<(), ()> {
+    pub fn update(&mut self, line: &impl Line<T>) -> Result<(), Error> {
         self.update_starts(line)?;
         self.update_ends(line)
     }
@@ -68,7 +68,7 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Updates the range start of all chains.
-    fn update_starts(&mut self, line: &impl Line<T>) -> Result<(), ()> {
+    fn update_starts(&mut self, line: &impl Line<T>) -> Result<(), Error> {
         // To avoid an integer overflow at minus one, we iterate with an index offset by plus one.
         let mut position = self.data.len();
 
@@ -89,7 +89,7 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Updates the range end of all chains.
-    fn update_ends(&mut self, line: &impl Line<T>) -> Result<(), ()> {
+    fn update_ends(&mut self, line: &impl Line<T>) -> Result<(), Error> {
         let mut index = 0;
 
         while index < self.data.len() {
@@ -134,7 +134,7 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Updates the start of a single chain.
-    fn update_start(&mut self, index: usize, line: &impl Line<T>, end: usize, same_color: bool) -> Result<usize, ()> {
+    fn update_start(&mut self, index: usize, line: &impl Line<T>, end: usize, same_color: bool) -> Result<usize, Error> {
         let chain = &mut self.data[index];
         chain.update_start_by_box_at_end(line, end);
         chain.update_start_by_adjacent(line)?;
@@ -144,7 +144,7 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Updates the end of a single chain.
-    fn update_end(&mut self, index: usize, line: &impl Line<T>, start: usize, same_color: bool) -> Result<usize, ()> {
+    fn update_end(&mut self, index: usize, line: &impl Line<T>, start: usize, same_color: bool) -> Result<usize, Error> {
         let chain = &mut self.data[index];
         chain.update_end_by_box_at_start(line, start);
         chain.update_end_by_adjacent(line)?;

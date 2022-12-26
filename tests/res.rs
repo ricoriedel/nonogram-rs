@@ -7,7 +7,7 @@ mod demo {
         let json = include_str!("../res/apple.json");
         let layout: Layout<char> = serde_json::from_str(json).unwrap();
 
-        assert!(layout.solve().is_ok());
+        assert!(layout.solve(()).is_ok());
     }
 
     #[test]
@@ -15,7 +15,7 @@ mod demo {
         let json = include_str!("../res/apple-color.json");
         let layout: Layout<char> = serde_json::from_str(json).unwrap();
 
-        assert!(layout.solve().is_ok());
+        assert!(layout.solve(()).is_ok());
     }
 
     #[test]
@@ -23,7 +23,7 @@ mod demo {
         let json = include_str!("../res/palm.json");
         let layout: Layout<char> = serde_json::from_str(json).unwrap();
 
-        assert!(layout.solve().is_ok());
+        assert!(layout.solve(()).is_ok());
     }
 
     #[test]
@@ -31,7 +31,7 @@ mod demo {
         let json = include_str!("../res/palm-color.json");
         let layout: Layout<char> = serde_json::from_str(json).unwrap();
 
-        assert!(layout.solve().is_ok());
+        assert!(layout.solve(()).is_ok());
     }
 
     #[test]
@@ -39,6 +39,6 @@ mod demo {
         let json = include_str!("../res/colors.json");
         let layout: Layout<char> = serde_json::from_str(json).unwrap();
 
-        assert!(layout.solve().is_ok());
+        assert!(layout.solve(()).is_ok());
     }
 }

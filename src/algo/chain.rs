@@ -1,6 +1,6 @@
 use std::ops::Range;
 use crate::line::Line;
-use crate::Cell;
+use crate::{Cell, Error};
 
 /// Metadata about a chain of [Cell::Box]s.
 #[derive(Clone, Debug)]
@@ -113,7 +113,7 @@ impl<T: Copy + PartialEq> Chain<T> {
 
     /// updates the start by pushing it past adjacent same colored boxes.
     /// Fails if the range between start and end gets too small to fit the chain.
-    pub fn update_start_by_adjacent(&mut self, line: &impl Line<T>) -> Result<(), ()> {
+    pub fn update_start_by_adjacent(&mut self, line: &impl Line<T>) -> Result<(), Error> {
         if self.start == 0 {
             return Ok(());
         }
@@ -128,11 +128,11 @@ impl<T: Copy + PartialEq> Chain<T> {
                 },
             }
         }
-        Err(())
+        Err(Error::Invalid)
     }
 
     /// Mirror of [Chain::update_start_by_adjacent].
-    pub fn update_end_by_adjacent(&mut self, line: &impl Line<T>) -> Result<(), ()> {
+    pub fn update_end_by_adjacent(&mut self, line: &impl Line<T>) -> Result<(), Error> {
         if self.end == line.len() {
             return Ok(());
         }
@@ -147,12 +147,12 @@ impl<T: Copy + PartialEq> Chain<T> {
                 },
             }
         }
-        Err(())
+        Err(Error::Invalid)
     }
 
     /// updates the start by moving it past too narrow gabs (between spaces and other colored boxes).
     /// Fails if the range between start and end gets too small to fit the chain.
-    pub fn update_start_by_gabs(&mut self, line: &impl Line<T>) -> Result<(), ()> {
+    pub fn update_start_by_gabs(&mut self, line: &impl Line<T>) -> Result<(), Error> {
         let mut count = 0;
 
         for i in self.start..self.end {
@@ -173,11 +173,11 @@ impl<T: Copy + PartialEq> Chain<T> {
                 }
             };
         }
-        Err(())
+        Err(Error::Invalid)
     }
 
     /// Mirror of [Chain::update_start_by_gabs].
-    pub fn update_end_by_gabs(&mut self, line: &impl Line<T>) -> Result<(), ()> {
+    pub fn update_end_by_gabs(&mut self, line: &impl Line<T>) -> Result<(), Error> {
         let mut count = 0;
 
         for i in (self.start..self.end).rev() {
@@ -198,7 +198,7 @@ impl<T: Copy + PartialEq> Chain<T> {
                 }
             };
         }
-        Err(())
+        Err(Error::Invalid)
     }
 }
 

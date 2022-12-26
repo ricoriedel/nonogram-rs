@@ -1,5 +1,5 @@
 use crate::line::{Col, Row};
-use crate::{Cell, Item, Nonogram};
+use crate::{Cell, Error, Item, Nonogram, Token};
 use crate::algo::flag::{Flag, FlagLine};
 use crate::algo::grid::Grid;
 
@@ -32,13 +32,13 @@ impl<T: Copy + PartialEq> Branch<T> {
 
     /// Tries to find the solution to this branch.
     /// Fails if the layout is invalid.
-    pub fn solve(self) -> Result<Nonogram<T>, ()> {
+    pub fn solve(self, token: impl Token) -> Result<Nonogram<T>, Error> {
         // Emulates recursion because there are to many big variables for the stack.
 
         let mut branches = vec![self];
 
         while let Some(mut branch) = branches.pop() {
-            match branch.try_solve() {
+            match branch.try_solve(&token) {
                 Ok(_) => (),
                 Err(_) => continue,
             }
@@ -52,36 +52,40 @@ impl<T: Copy + PartialEq> Branch<T> {
                 }
             }
         }
-        Err(())
+        Err(Error::Invalid)
     }
 
     /// Tries to solve a branch without forking.
-    fn try_solve(&mut self) -> Result<(), ()> {
+    fn try_solve(&mut self, token: &impl Token) -> Result<(), Error> {
         while self.cols.flagged() || self.rows.flagged() {
-            self.try_solve_cols()?;
-            self.try_solve_rows()?;
+            self.try_solve_cols(token)?;
+            self.try_solve_rows(token)?;
         }
         Ok(())
     }
 
     /// Tries to solve all columns.
-    fn try_solve_cols(&mut self) -> Result<(), ()> {
+    fn try_solve_cols(&mut self, token: &impl Token) -> Result<(), Error> {
         for i in 0..self.rows.len() {
             let line = Col::new(&mut self.nonogram, i);
             let flag_line = &mut FlagLine::using(line, &mut self.rows);
 
             self.cols.update(i, flag_line)?;
+
+            token.check()?;
         }
         Ok(())
     }
 
     /// Tries to solve all rows.
-    fn try_solve_rows(&mut self) -> Result<(), ()> {
+    fn try_solve_rows(&mut self, token: &impl Token) -> Result<(), Error> {
         for i in 0..self.rows.len() {
             let line = Row::new(&mut self.nonogram, i);
             let flag_line = &mut FlagLine::using(line, &mut self.cols);
 
             self.rows.update(i, flag_line)?;
+
+            token.check()?;
         }
         Ok(())
     }
@@ -130,7 +134,7 @@ mod test {
             vec![Item::new('b', 1)],
         ];
         let branch = Branch::build(&cols, &rows);
-        let nonogram = branch.solve().unwrap();
+        let nonogram = branch.solve(()).unwrap();
 
         assert!(matches!(nonogram[(0, 0)], Box { color: 'a' }));
         assert!(matches!(nonogram[(1, 0)], Space));
@@ -155,7 +159,7 @@ mod test {
         ];
         let branch = Branch::build(&cols, &rows);
 
-        assert!(branch.solve().is_err());
+        assert!(branch.solve(()).is_err());
     }
 
     #[test]
@@ -169,6 +173,6 @@ mod test {
         ];
         let branch = Branch::build(&cols, &cols);
 
-        assert!(branch.solve().is_ok());
+        assert!(branch.solve(()).is_ok());
     }
 }

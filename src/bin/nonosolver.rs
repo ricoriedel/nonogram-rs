@@ -40,7 +40,7 @@ fn main() -> Result<(), &'static str> {
 
 fn solve() -> Result<(), &'static str> {
     let layout: Layout<char> = serde_json::from_reader(stdin()).map_err(|_| BAD_LAYOUT)?;
-    let nonogram = layout.solve().map_err(|_| INVALID_LAYOUT)?;
+    let nonogram = layout.solve(()).map_err(|_| INVALID_LAYOUT)?;
 
     serde_json::to_writer(stdout(),  &nonogram).unwrap();
 

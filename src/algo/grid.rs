@@ -1,6 +1,6 @@
 use crate::algo::flag::Flag;
 use crate::algo::line::Layout;
-use crate::Item;
+use crate::{Error, Item};
 use crate::line::Line;
 
 /// Flag utility used in [Branch::try_solve_cols] and [Branch::try_solve_rows].
@@ -27,7 +27,7 @@ impl<T: Copy + PartialEq> Grid<T> {
         self.lines.len()
     }
 
-    pub fn update(&mut self, index: usize, line: &mut impl Line<T>) -> Result<(), ()> {
+    pub fn update(&mut self, index: usize, line: &mut impl Line<T>) -> Result<(), Error> {
         let layout = &mut self.lines[index];
 
         if layout.flagged() {
