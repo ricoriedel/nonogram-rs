@@ -17,11 +17,11 @@ These have to be applied in order!
 We will only take a look at how to find the start of the range.
 Finding the end is the same process just in the opposite direction.
 
-### 1. Reduce start by box at the end
+### 1. Update start by box at end
 If there are boxes on the right of this chain, 
 which cannot be covered by another chain on the right,
 then they must belong to this chain.
-In the example below, we can reduce the start of the range of the first chain to the indicated area.
+In the example below, we can set the start of the range of the first chain to the indicated area.
 
 How to implement:
 * Take the start of the chain of the right (if there is any).
@@ -29,27 +29,27 @@ How to implement:
 * Stop at the first box with the same color.
 * Subtract the length of the chain.
 
-See: `nonogram_rs::algo::chain::Chain::reduce_start_by_box_at_end`
+See: `nonogram_rs::algo::chain::Chain::update_start_by_box_at_end`
 
-![](img/recude-start-by-boxes-at-end.svg)
+![](img/update-start-by-boxes-at-end.svg)
 
-### 2. Reduce start by adjacent
+### 2. Update start by adjacent
 Two chains with the same color cannot be adjacent to each other.
 Thus, if the cell to the left of the start is a box with the same color, 
-we have to reduce the start past these boxes.
+we have to set the start past these boxes.
 
 How to implement:
 * Look at the cell to the left of the start (if there is any).
 * Check if it is a box of the same color.
 * If yes, advance by one and repeat.
 
-See: `nonogram_rs::algo::chain::Chain::reduce_start_by_adjacent`
+See: `nonogram_rs::algo::chain::Chain::update_start_by_adjacent`
 
-![](img/reduce-start-by-adjacent.svg)
+![](img/update-start-by-adjacent.svg)
 
-### 3. Reduce start by gabs
+### 3. Update start by gabs
 This one is very straightforward, a chain cannot overlap with spaces or boxes with a different color.
-If the area after the start is blocked by spaces (or boxes) we have to reduce the start past them.
+If the area after the start is blocked by spaces (or boxes) we have to set the start past them.
 
 How to implement:
 * Iterator the cells past the start.
@@ -57,9 +57,9 @@ How to implement:
 * If it is a space or a box with a different color, reset the count to zero.
 * Continue until the count is equal to the length of the chain.
 
-See: `nonogram_rs::algo::chain::Chain::reduce_start_by_gabs`
+See: `nonogram_rs::algo::chain::Chain::update_start_by_gabs`
 
-![](img/reduce-start-by-gabs.svg)
+![](img/update-start-by-gabs.svg)
 
 ## Multiple chains
 So far we only looked at how to apply these techniques to one chain.
@@ -81,7 +81,7 @@ It might be required to backtrack multiple chains.
 
 See: `nonogram_rs::algo::line::Layout::update_starts`
 
-![](img/reduce-starts.svg)
+![](img/update-starts.svg)
 
 ## Filling in the nonogram
 After we updated all ranges, we can start filling in the nonogram.

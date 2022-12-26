@@ -49,7 +49,7 @@ impl<T: Copy + PartialEq> Layout<T> {
     /// Updates the metadata about the chains based on new clues.
     pub fn update(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
         self.update_starts(line)?;
-        self.update_stops(line)
+        self.update_ends(line)
     }
 
     /// Writes conclusions from the contained metadata onto a line.
@@ -94,20 +94,20 @@ impl<T: Copy + PartialEq> Layout<T> {
         Ok(())
     }
 
-    /// Updates the range stop of all chains.
-    fn update_stops(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
+    /// Updates the range end of all chains.
+    fn update_ends(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
         let mut index = 0;
 
         while index < self.data.len() {
-            let (left_stop, same_color) = self.check_left(index);
-            let last_stop = self.update_stop(index, line, left_stop, same_color)?;
+            let (left_end, same_color) = self.check_left(index);
+            let last_end = self.update_end(index, line, left_end, same_color)?;
 
-            if left_stop <= last_stop {
+            if left_end <= last_end {
                 index += 1;
             } else {
                 index -= 1;
 
-                self.data[index].set_stop(last_stop);
+                self.data[index].set_end(last_end);
             }
         }
         Ok(())
@@ -126,49 +126,49 @@ impl<T: Copy + PartialEq> Layout<T> {
         }
     }
 
-    /// Checks if a chain to the left exists, where it stops and if it has the same color.
+    /// Checks if a chain to the left exists, where it ends and if it has the same color.
     /// If no chain is to the left, zero is returned as start.
     fn check_left(&self, index: usize) -> (usize, bool) {
         if index > 0 {
             let this = &self.data[index];
             let left = &self.data[index - 1];
 
-            (left.stop(), left.color() == this.color())
+            (left.end(), left.color() == this.color())
         } else {
             (0, false)
         }
     }
 
     /// Updates the start of a single chain.
-    fn update_start(&mut self, index: usize, line: &impl LineMut<T>, stop: usize, same_color: bool) -> Result<usize, ()> {
+    fn update_start(&mut self, index: usize, line: &impl LineMut<T>, end: usize, same_color: bool) -> Result<usize, ()> {
         let chain = &mut self.data[index];
-        chain.reduce_start_by_box_at_end(line, stop);
-        chain.reduce_start_by_adjacent(line)?;
-        chain.reduce_start_by_gabs(line)?;
+        chain.update_start_by_box_at_end(line, end);
+        chain.update_start_by_adjacent(line)?;
+        chain.update_start_by_gabs(line)?;
 
         Ok(chain.first_start(same_color))
     }
 
-    /// Updates the stop of a single chain.
-    fn update_stop(&mut self, index: usize, line: &impl LineMut<T>, start: usize, same_color: bool) -> Result<usize, ()> {
+    /// Updates the end of a single chain.
+    fn update_end(&mut self, index: usize, line: &impl LineMut<T>, start: usize, same_color: bool) -> Result<usize, ()> {
         let chain = &mut self.data[index];
-        chain.reduce_stop_by_box_at_start(line, start);
-        chain.reduce_stop_by_adjacent(line)?;
-        chain.reduce_stop_by_gabs(line)?;
+        chain.update_end_by_box_at_start(line, start);
+        chain.update_end_by_adjacent(line)?;
+        chain.update_end_by_gabs(line)?;
 
-        Ok(chain.last_stop(same_color))
+        Ok(chain.last_end(same_color))
     }
 
 
     /// Writes all known boxes to the line.
     fn write_boxes(&self, line: &mut impl LineMut<T>, flags: &mut impl Flags) {
         for chain in &self.data {
-            let start = chain.stop() - chain.len();
-            let stop = chain.start() + chain.len();
+            let start = chain.end() - chain.len();
+            let end = chain.start() + chain.len();
             let value = Cell::Box {
                 color: chain.color(),
             };
-            Layout::fill(start..stop, value, line, flags);
+            Layout::fill(start..end, value, line, flags);
         }
     }
 
@@ -178,7 +178,7 @@ impl<T: Copy + PartialEq> Layout<T> {
 
         for chain in &self.data {
             Layout::fill(start..chain.start(), Cell::Space, line, flags);
-            start = chain.stop();
+            start = chain.end();
         }
         Layout::fill(start..line.len(), Cell::Space, line, flags);
     }

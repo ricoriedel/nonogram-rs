@@ -7,17 +7,17 @@ pub struct Chain<T> {
     color: T,
     len: usize,
     start: usize,
-    stop: usize,
+    end: usize,
 }
 
 impl<T> Chain<T> {
     /// Constructs a new chain.
-    pub fn new(color: T, len: usize, start: usize, stop: usize) -> Self {
+    pub fn new(color: T, len: usize, start: usize, end: usize) -> Self {
         Self {
             color,
             len,
             start,
-            stop,
+            end,
         }
     }
 }
@@ -52,36 +52,36 @@ impl<T: Copy + PartialEq> Chain<T> {
         }
     }
 
-    /// Returns the stop of the possible range.
-    pub fn stop(&self) -> usize {
-        self.stop
+    /// Returns the end of the possible range.
+    pub fn end(&self) -> usize {
+        self.end
     }
 
-    /// Sets the stop of the possible range.
-    pub fn set_stop(&mut self, stop: usize) {
-        self.stop = stop;
+    /// Sets the end of the possible range.
+    pub fn set_end(&mut self, end: usize) {
+        self.end = end;
     }
 
-    /// Get the last *possible* stop of the chain to the left.
-    pub fn last_stop(&self, same_color: bool) -> usize {
+    /// Get the last *possible* end of the chain to the left.
+    pub fn last_end(&self, same_color: bool) -> usize {
         if same_color {
-            self.stop - self.len - 1
+            self.end - self.len - 1
         } else {
-            self.stop - self.len
+            self.end - self.len
         }
     }
 
     /// Checks if the exact location of the chain has been found.
     pub fn solved(&self) -> bool {
-        self.stop - self.start == self.len
+        self.end - self.start == self.len
     }
 
-    /// Reduces the start by pulling it to a box on the right.
-    /// Boxes beyond the [stop] parameter are ignored.
-    pub fn reduce_start_by_box_at_end(&mut self, line: &impl LineMut<T>, stop: usize) {
+    /// updates the start by pulling it to a box on the right.
+    /// Boxes beyond the [end] parameter are ignored.
+    pub fn update_start_by_box_at_end(&mut self, line: &impl LineMut<T>, end: usize) {
         let start = self.start + self.len;
 
-        for i in (start..stop).rev() {
+        for i in (start..end).rev() {
             match &line[i] {
                 Cell::Box { color } if color == &self.color => {
                     self.start = i + 1 - self.len;
@@ -92,14 +92,14 @@ impl<T: Copy + PartialEq> Chain<T> {
         }
     }
 
-    /// Mirror of [Chain::reduce_start_by_box_at_end].
-    pub fn reduce_stop_by_box_at_start(&mut self, line: &impl LineMut<T>, start: usize) {
-        let stop = self.stop - self.len;
+    /// Mirror of [Chain::update_start_by_box_at_end].
+    pub fn update_end_by_box_at_start(&mut self, line: &impl LineMut<T>, start: usize) {
+        let end = self.end - self.len;
 
-        for i in start..stop {
+        for i in start..end {
             match &line[i] {
                 Cell::Box { color } if color == &self.color => {
-                    self.stop = i + self.len;
+                    self.end = i + self.len;
                     return;
                 }
                 _ => (),
@@ -107,15 +107,15 @@ impl<T: Copy + PartialEq> Chain<T> {
         }
     }
 
-    /// Reduces the start by pushing it past adjacent same colored boxes.
-    /// Fails if the range between start and stop gets too small to fit the chain.
-    pub fn reduce_start_by_adjacent(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
+    /// updates the start by pushing it past adjacent same colored boxes.
+    /// Fails if the range between start and end gets too small to fit the chain.
+    pub fn update_start_by_adjacent(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
         if self.start == 0 {
             return Ok(());
         }
-        let stop = self.stop - self.len;
+        let end = self.end - self.len;
 
-        for i in self.start..=stop {
+        for i in self.start..=end {
             match &line[i - 1] {
                 Cell::Box { color } if color == &self.color => (),
                 _ => {
@@ -127,18 +127,18 @@ impl<T: Copy + PartialEq> Chain<T> {
         Err(())
     }
 
-    /// Mirror of [Chain::reduce_start_by_adjacent].
-    pub fn reduce_stop_by_adjacent(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
-        if self.stop == line.len() {
+    /// Mirror of [Chain::update_start_by_adjacent].
+    pub fn update_end_by_adjacent(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
+        if self.end == line.len() {
             return Ok(());
         }
         let start = self.start + self.len;
 
-        for i in (start..=self.stop).rev() {
+        for i in (start..=self.end).rev() {
             match &line[i] {
                 Cell::Box { color } if color == &self.color => (),
                 _ => {
-                    self.stop = i;
+                    self.end = i;
                     return Ok(());
                 },
             }
@@ -146,12 +146,12 @@ impl<T: Copy + PartialEq> Chain<T> {
         Err(())
     }
 
-    /// Reduces the start by moving it past too narrow gabs (between spaces and other colored boxes).
-    /// Fails if the range between start and stop gets too small to fit the chain.
-    pub fn reduce_start_by_gabs(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
+    /// updates the start by moving it past too narrow gabs (between spaces and other colored boxes).
+    /// Fails if the range between start and end gets too small to fit the chain.
+    pub fn update_start_by_gabs(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
         let mut count = 0;
 
-        for i in self.start..self.stop {
+        for i in self.start..self.end {
             match &line[i] {
                 Cell::Space => {
                     count = 0;
@@ -172,11 +172,11 @@ impl<T: Copy + PartialEq> Chain<T> {
         Err(())
     }
 
-    /// Mirror of [Chain::reduce_start_by_gabs].
-    pub fn reduce_stop_by_gabs(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
+    /// Mirror of [Chain::update_start_by_gabs].
+    pub fn update_end_by_gabs(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
         let mut count = 0;
 
-        for i in (self.start..self.stop).rev() {
+        for i in (self.start..self.end).rev() {
             match &line[i] {
                 Cell::Space => {
                     count = 0;
@@ -188,7 +188,7 @@ impl<T: Copy + PartialEq> Chain<T> {
                     count += 1;
 
                     if count == self.len {
-                        self.stop = i + self.len;
+                        self.end = i + self.len;
                         return Ok(());
                     }
                 }
@@ -210,7 +210,7 @@ mod test {
         assert_eq!(4, c.color());
         assert_eq!(2, c.len());
         assert_eq!(3, c.start());
-        assert_eq!(7, c.stop());
+        assert_eq!(7, c.end());
     }
 
     #[test]
@@ -237,26 +237,26 @@ mod test {
     }
 
     #[test]
-    fn chain_set_stop() {
+    fn chain_set_end() {
         let mut c = Chain::new(0, 0, 0, 2);
 
-        c.set_stop(6);
+        c.set_end(6);
 
-        assert_eq!(6, c.stop());
+        assert_eq!(6, c.end());
     }
 
     #[test]
-    fn chain_last_stop_same_color_false() {
+    fn chain_last_end_same_color_false() {
         let c = Chain::new(0, 2, 0, 7);
 
-        assert_eq!(5, c.last_stop(false));
+        assert_eq!(5, c.last_end(false));
     }
 
     #[test]
-    fn chain_last_stop_same_color_true() {
+    fn chain_last_end_same_color_true() {
         let c = Chain::new(0, 4, 0, 8);
 
-        assert_eq!(3, c.last_stop(true));
+        assert_eq!(3, c.last_end(true));
     }
 
     #[test]
@@ -266,37 +266,37 @@ mod test {
     }
 
     #[test]
-    fn chain_reduce_start_by_box_at_end_none() {
+    fn chain_update_start_by_box_at_end_none() {
         let line = vec![Space, Empty, Space, Empty];
         let mut c = Chain::new(7, 2, 0, line.len());
 
-        c.reduce_start_by_box_at_end(&line, line.len());
+        c.update_start_by_box_at_end(&line, line.len());
 
         assert_eq!(0, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_box_at_end_one_box() {
+    fn chain_update_start_by_box_at_end_one_box() {
         let line = vec![Space, Empty, Space, Empty, Box { color: 7 }, Empty];
         let mut c = Chain::new(7, 3, 0, line.len());
 
-        c.reduce_start_by_box_at_end(&line, line.len());
+        c.update_start_by_box_at_end(&line, line.len());
 
         assert_eq!(2, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_box_at_end_box_beyond_stop() {
+    fn chain_update_start_by_box_at_end_box_beyond_end() {
         let line = vec![Space, Empty, Space, Empty, Box { color: 7 }, Empty];
         let mut c = Chain::new(7, 3, 0, line.len());
 
-        c.reduce_start_by_box_at_end(&line, 4);
+        c.update_start_by_box_at_end(&line, 4);
 
         assert_eq!(0, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_box_at_end_false_color() {
+    fn chain_update_start_by_box_at_end_false_color() {
         let line = vec![
             Space,
             Empty,
@@ -307,13 +307,13 @@ mod test {
         ];
         let mut c = Chain::new(1, 3, 0, line.len());
 
-        c.reduce_start_by_box_at_end(&line, line.len());
+        c.update_start_by_box_at_end(&line, line.len());
 
         assert_eq!(1, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_box_at_end_multiple_boxes() {
+    fn chain_update_start_by_box_at_end_multiple_boxes() {
         let line = vec![
             Space,
             Empty,
@@ -325,53 +325,53 @@ mod test {
         ];
         let mut c = Chain::new(7, 2, 0, line.len());
 
-        c.reduce_start_by_box_at_end(&line, line.len());
+        c.update_start_by_box_at_end(&line, line.len());
 
         assert_eq!(4, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_box_at_end_box_at_start() {
+    fn chain_update_start_by_box_at_end_box_at_start() {
         let line = vec![Space, Box { color: 7 }, Space, Empty, Space];
         let mut c = Chain::new(7, 3, 0, line.len());
 
-        c.reduce_start_by_box_at_end(&line, line.len());
+        c.update_start_by_box_at_end(&line, line.len());
 
         assert_eq!(0, c.start());
     }
 
     #[test]
-    fn chain_reduce_stop_by_box_at_start_none() {
+    fn chain_update_end_by_box_at_start_none() {
         let line = vec![Space, Empty, Space, Empty];
         let mut c = Chain::new(7, 2, 0, line.len());
 
-        c.reduce_stop_by_box_at_start(&line, 0);
+        c.update_end_by_box_at_start(&line, 0);
 
-        assert_eq!(4, c.stop());
+        assert_eq!(4, c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_box_at_start_one_box() {
+    fn chain_update_end_by_box_at_start_one_box() {
         let line = vec![Space, Box { color: 7 }, Space, Empty, Space, Empty];
         let mut c = Chain::new(7, 3, 0, line.len());
 
-        c.reduce_stop_by_box_at_start(&line, 0);
+        c.update_end_by_box_at_start(&line, 0);
 
-        assert_eq!(4, c.stop());
+        assert_eq!(4, c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_box_at_start_box_beyond_stop() {
+    fn chain_update_end_by_box_at_start_box_beyond_end() {
         let line = vec![Space, Box { color: 7 }, Space, Empty, Space, Empty];
         let mut c = Chain::new(7, 3, 0, line.len());
 
-        c.reduce_stop_by_box_at_start(&line, 2);
+        c.update_end_by_box_at_start(&line, 2);
 
-        assert_eq!(6, c.stop());
+        assert_eq!(6, c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_box_at_start_false_color() {
+    fn chain_update_end_by_box_at_start_false_color() {
         let line = vec![
             Box { color: 8 },
             Box { color: 7 },
@@ -382,13 +382,13 @@ mod test {
         ];
         let mut c = Chain::new(1, 3, 0, line.len());
 
-        c.reduce_stop_by_box_at_start(&line, 0);
+        c.update_end_by_box_at_start(&line, 0);
 
-        assert_eq!(5, c.stop());
+        assert_eq!(5, c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_box_at_start_multiple_boxes() {
+    fn chain_update_end_by_box_at_start_multiple_boxes() {
         let line = vec![
             Space,
             Box { color: 7 },
@@ -400,139 +400,139 @@ mod test {
         ];
         let mut c = Chain::new(7, 2, 0, line.len());
 
-        c.reduce_stop_by_box_at_start(&line, 0);
+        c.update_end_by_box_at_start(&line, 0);
 
-        assert_eq!(3, c.stop());
+        assert_eq!(3, c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_box_at_start_box_at_start() {
+    fn chain_update_end_by_box_at_start_box_at_start() {
         let line = vec![Space, Empty, Space, Box { color: 7 }, Space];
         let mut c = Chain::new(7, 3, 0, line.len());
 
-        c.reduce_stop_by_box_at_start(&line, 0);
+        c.update_end_by_box_at_start(&line, 0);
 
-        assert_eq!(5, c.stop());
+        assert_eq!(5, c.end());
     }
 
     #[test]
-    fn chain_reduce_start_by_adjacent_fully_at_left() {
+    fn chain_update_start_by_adjacent_fully_at_left() {
         let line = vec![Box { color: 4 }, Box { color: 4 }, Empty, Empty];
         let mut c = Chain::new(4, 2, 0, 0);
 
-        c.reduce_start_by_adjacent(&line).unwrap();
+        c.update_start_by_adjacent(&line).unwrap();
 
         assert_eq!(0, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_adjacent_none() {
+    fn chain_update_start_by_adjacent_none() {
         let line = vec![Empty, Empty, Empty, Empty, Empty];
         let mut c = Chain::new(4, 2, 2, line.len());
 
-        c.reduce_start_by_adjacent(&line).unwrap();
+        c.update_start_by_adjacent(&line).unwrap();
 
         assert_eq!(2, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_adjacent_some_boxes() {
+    fn chain_update_start_by_adjacent_some_boxes() {
         let line = vec![Box { color: 4 }, Box { color: 4 }, Empty, Empty, Empty];
         let mut c = Chain::new(4, 2, 1, line.len());
 
-        c.reduce_start_by_adjacent(&line).unwrap();
+        c.update_start_by_adjacent(&line).unwrap();
 
         assert_eq!(3, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_adjacent_some_different_colored_boxes() {
+    fn chain_update_start_by_adjacent_some_different_colored_boxes() {
         let line = vec![Box { color: 2 }, Box { color: 1 }, Empty, Empty];
         let mut c = Chain::new(4, 2, 1, line.len());
 
-        c.reduce_start_by_adjacent(&line).unwrap();
+        c.update_start_by_adjacent(&line).unwrap();
 
         assert_eq!(1, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_adjacent_some_spaces() {
+    fn chain_update_start_by_adjacent_some_spaces() {
         let line = vec![Space, Space, Empty, Empty];
         let mut c = Chain::new(4, 2, 1, line.len());
 
-        c.reduce_start_by_adjacent(&line).unwrap();
+        c.update_start_by_adjacent(&line).unwrap();
 
         assert_eq!(1, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_adjacent_boxes_err() {
+    fn chain_update_start_by_adjacent_boxes_err() {
         let line = vec![Box { color: 4 }, Box { color: 4 }, Empty, Empty];
         let mut c = Chain::new(4, 2, 1, line.len());
 
-        assert!(c.reduce_start_by_adjacent(&line).is_err());
+        assert!(c.update_start_by_adjacent(&line).is_err());
     }
 
     #[test]
-    fn chain_reduce_start_by_adjacent_boxes_err_by_stop() {
+    fn chain_update_start_by_adjacent_boxes_err_by_end() {
         let line = vec![Box { color: 4 }, Box { color: 4 }, Empty, Empty, Empty];
         let mut c = Chain::new(4, 2, 1, 4);
 
-        assert!(c.reduce_start_by_adjacent(&line).is_err());
+        assert!(c.update_start_by_adjacent(&line).is_err());
     }
 
     #[test]
-    fn chain_reduce_stop_by_adjacent_fully_at_right() {
+    fn chain_update_end_by_adjacent_fully_at_right() {
         let line = vec![Empty, Empty, Box { color: 4 }, Box { color: 4 }];
         let mut c = Chain::new(4, 2, 0, line.len());
 
-        c.reduce_stop_by_adjacent(&line).unwrap();
+        c.update_end_by_adjacent(&line).unwrap();
 
-        assert_eq!(line.len(), c.stop());
+        assert_eq!(line.len(), c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_adjacent_none() {
+    fn chain_update_end_by_adjacent_none() {
         let line = vec![Empty, Empty, Empty, Empty, Empty];
         let mut c = Chain::new(4, 2, 0, 4);
 
-        c.reduce_stop_by_adjacent(&line).unwrap();
+        c.update_end_by_adjacent(&line).unwrap();
 
-        assert_eq!(4, c.stop());
+        assert_eq!(4, c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_adjacent_some_boxes() {
+    fn chain_update_end_by_adjacent_some_boxes() {
         let line = vec![Empty, Empty, Empty, Box { color: 4 }, Box { color: 4 }];
         let mut c = Chain::new(4, 2, 0, 4);
 
-        c.reduce_stop_by_adjacent(&line).unwrap();
+        c.update_end_by_adjacent(&line).unwrap();
 
-        assert_eq!(2, c.stop());
+        assert_eq!(2, c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_adjacent_some_different_colored_boxes() {
+    fn chain_update_end_by_adjacent_some_different_colored_boxes() {
         let line = vec![Empty, Empty, Empty, Box { color: 2 }, Box { color: 1 }];
         let mut c = Chain::new(4, 2, 0, 4);
 
-        c.reduce_stop_by_adjacent(&line).unwrap();
+        c.update_end_by_adjacent(&line).unwrap();
 
-        assert_eq!(4, c.stop());
+        assert_eq!(4, c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_adjacent_some_spaces() {
+    fn chain_update_end_by_adjacent_some_spaces() {
         let line = vec![Empty, Empty, Empty, Space, Space];
         let mut c = Chain::new(4, 2, 0, 4);
 
-        c.reduce_stop_by_adjacent(&line).unwrap();
+        c.update_end_by_adjacent(&line).unwrap();
 
-        assert_eq!(4, c.stop());
+        assert_eq!(4, c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_adjacent_boxes_err() {
+    fn chain_update_end_by_adjacent_boxes_err() {
         let line = vec![
             Empty,
             Empty,
@@ -542,11 +542,11 @@ mod test {
         ];
         let mut c = Chain::new(4, 2, 0, 4);
 
-        assert!(c.reduce_stop_by_adjacent(&line).is_err());
+        assert!(c.update_end_by_adjacent(&line).is_err());
     }
 
     #[test]
-    fn chain_reduce_stop_by_adjacent_boxes_err_by_start() {
+    fn chain_update_end_by_adjacent_boxes_err_by_start() {
         let line = vec![
             Empty,
             Empty,
@@ -557,41 +557,41 @@ mod test {
         ];
         let mut c = Chain::new(4, 2, 1, 5);
 
-        assert!(c.reduce_stop_by_adjacent(&line).is_err());
+        assert!(c.update_end_by_adjacent(&line).is_err());
     }
 
     #[test]
-    fn chain_reduce_start_by_gabs_nothing() {
+    fn chain_update_start_by_gabs_nothing() {
         let line = vec![Empty, Empty, Empty, Empty];
         let mut c = Chain::new(4, 2, 2, line.len());
 
-        c.reduce_start_by_gabs(&line).unwrap();
+        c.update_start_by_gabs(&line).unwrap();
 
         assert_eq!(2, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_gabs_spaces() {
+    fn chain_update_start_by_gabs_spaces() {
         let line = vec![Empty, Empty, Space, Empty, Space, Empty, Empty, Empty];
         let mut c = Chain::new(4, 2, 1, line.len());
 
-        c.reduce_start_by_gabs(&line).unwrap();
+        c.update_start_by_gabs(&line).unwrap();
 
         assert_eq!(5, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_gabs_boxes() {
+    fn chain_update_start_by_gabs_boxes() {
         let line = vec![Empty, Empty, Box { color: 4 }, Empty, Empty];
         let mut c = Chain::new(4, 2, 1, line.len());
 
-        c.reduce_start_by_gabs(&line).unwrap();
+        c.update_start_by_gabs(&line).unwrap();
 
         assert_eq!(1, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_gabs_different_colored_boxes() {
+    fn chain_update_start_by_gabs_different_colored_boxes() {
         let line = vec![
             Empty,
             Empty,
@@ -604,59 +604,59 @@ mod test {
         ];
         let mut c = Chain::new(4, 2, 1, line.len());
 
-        c.reduce_start_by_gabs(&line).unwrap();
+        c.update_start_by_gabs(&line).unwrap();
 
         assert_eq!(5, c.start());
     }
 
     #[test]
-    fn chain_reduce_start_by_gabs_err() {
+    fn chain_update_start_by_gabs_err() {
         let line = vec![Empty, Empty, Box { color: 2 }, Empty];
         let mut c = Chain::new(4, 2, 1, line.len());
 
-        assert!(c.reduce_start_by_gabs(&line).is_err());
+        assert!(c.update_start_by_gabs(&line).is_err());
     }
 
     #[test]
-    fn chain_reduce_start_by_gabs_err_by_stop() {
+    fn chain_update_start_by_gabs_err_by_end() {
         let line = vec![Empty, Empty, Box { color: 2 }, Empty, Empty];
         let mut c = Chain::new(4, 2, 1, 4);
 
-        assert!(c.reduce_start_by_gabs(&line).is_err());
+        assert!(c.update_start_by_gabs(&line).is_err());
     }
 
     #[test]
-    fn chain_reduce_stop_by_gabs_nothing() {
+    fn chain_update_end_by_gabs_nothing() {
         let line = vec![Empty, Empty, Empty, Empty];
         let mut c = Chain::new(4, 2, 1, line.len());
 
-        c.reduce_stop_by_gabs(&line).unwrap();
+        c.update_end_by_gabs(&line).unwrap();
 
-        assert_eq!(line.len(), c.stop());
+        assert_eq!(line.len(), c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_gabs_spaces() {
+    fn chain_update_end_by_gabs_spaces() {
         let line = vec![Empty, Empty, Empty, Space, Empty, Space, Empty, Empty];
         let mut c = Chain::new(4, 2, 0, 7);
 
-        c.reduce_stop_by_gabs(&line).unwrap();
+        c.update_end_by_gabs(&line).unwrap();
 
-        assert_eq!(3, c.stop());
+        assert_eq!(3, c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_gabs_boxes() {
+    fn chain_update_end_by_gabs_boxes() {
         let line = vec![Empty, Empty, Box { color: 4 }, Empty, Empty];
         let mut c = Chain::new(4, 2, 1, 4);
 
-        c.reduce_stop_by_gabs(&line).unwrap();
+        c.update_end_by_gabs(&line).unwrap();
 
-        assert_eq!(4, c.stop());
+        assert_eq!(4, c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_gabs_different_colored_boxes() {
+    fn chain_update_end_by_gabs_different_colored_boxes() {
         let line = vec![
             Empty,
             Empty,
@@ -669,24 +669,24 @@ mod test {
         ];
         let mut c = Chain::new(4, 2, 1, 7);
 
-        c.reduce_stop_by_gabs(&line).unwrap();
+        c.update_end_by_gabs(&line).unwrap();
 
-        assert_eq!(3, c.stop());
+        assert_eq!(3, c.end());
     }
 
     #[test]
-    fn chain_reduce_stop_by_gabs_err() {
+    fn chain_update_end_by_gabs_err() {
         let line = vec![Empty, Box { color: 2 }, Empty];
         let mut c = Chain::new(4, 2, 0, line.len());
 
-        assert!(c.reduce_stop_by_gabs(&line).is_err());
+        assert!(c.update_end_by_gabs(&line).is_err());
     }
 
     #[test]
-    fn chain_reduce_stop_by_gabs_err_by_start() {
+    fn chain_update_end_by_gabs_err_by_start() {
         let line = vec![Empty, Empty, Box { color: 2 }, Empty, Empty];
         let mut c = Chain::new(4, 2, 1, 4);
 
-        assert!(c.reduce_stop_by_gabs(&line).is_err());
+        assert!(c.update_end_by_gabs(&line).is_err());
     }
 }
