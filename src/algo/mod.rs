@@ -66,9 +66,9 @@ impl<T: Copy + PartialEq> Branch<T> {
 
     /// Tries to solve all columns.
     fn try_solve_cols(&mut self, token: &impl Token) -> Result<(), Error> {
-        for i in 0..self.rows.len() {
+        for i in 0..self.nonogram.cols() {
             let line = Col::new(&mut self.nonogram, i);
-            let flag_line = &mut FlagLine::using(line, &mut self.rows);
+            let flag_line = &mut FlagLine::new(line, &mut self.rows);
 
             self.cols.update(i, flag_line)?;
 
@@ -79,9 +79,9 @@ impl<T: Copy + PartialEq> Branch<T> {
 
     /// Tries to solve all rows.
     fn try_solve_rows(&mut self, token: &impl Token) -> Result<(), Error> {
-        for i in 0..self.rows.len() {
+        for i in 0..self.nonogram.rows() {
             let line = Row::new(&mut self.nonogram, i);
-            let flag_line = &mut FlagLine::using(line, &mut self.cols);
+            let flag_line = &mut FlagLine::new(line, &mut self.cols);
 
             self.rows.update(i, flag_line)?;
 
@@ -91,12 +91,11 @@ impl<T: Copy + PartialEq> Branch<T> {
     }
 
     /// Finds and unsolved cell including the only possible color.
+    ///
+    /// Tuple: `(color, line, cell)`
     fn find_unsolved(&self) -> Option<(T, usize, usize)> {
         if let Some((color, line, cell)) = self.cols.find_unsolved() {
             return Some((color, line, cell));
-        }
-        if let Some((color, line, cell)) = self.rows.find_unsolved() {
-            return Some((color, cell, line));
         }
         None
     }

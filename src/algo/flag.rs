@@ -1,25 +1,26 @@
 use crate::Cell;
 use crate::line::Line;
 
-/// Used to flag altered crossing lines as dirty.
+/// Used to flag intersecting lines as changed.
 pub trait Flag {
-    /// Returns whether or not any layout was flagged.
+    /// Returns whether or not any line is flagged.
     fn flagged(&self) -> bool;
 
-    fn clear(&mut self);
-
+    /// Flags a line and this object as changed.
     fn flag(&mut self, index: usize);
 }
 
+/// A wrapper for [Line] which flags changed intersecting lines.
 pub struct FlagLine<'a, TLine, TFlag> {
     line: TLine,
     flag: &'a mut TFlag,
 }
 
 impl<'a, TLine, TFlag: Flag> FlagLine<'a, TLine, TFlag> {
-    pub fn using(line: TLine, flag: &'a mut TFlag) -> Self {
-        flag.clear();
-
+    /// Create a new [FlagLine].
+    ///
+    /// The [Flag] is automatically cleared by this function.
+    pub fn new(line: TLine, flag: &'a mut TFlag) -> Self {
         Self { line, flag }
     }
 }

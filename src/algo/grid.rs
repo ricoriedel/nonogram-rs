@@ -3,30 +3,23 @@ use crate::algo::line::Layout;
 use crate::{Error, Item};
 use crate::line::Line;
 
-/// Flag utility used in [Branch::try_solve_cols] and [Branch::try_solve_rows].
+/// A grid of numbers used in [Branch::try_solve_cols] and [Branch::try_solve_rows].
 #[derive(Clone)]
 pub struct Grid<T> {
-    flagged: bool,
     lines: Vec<Layout<T>>
 }
 
 impl<T: Copy + PartialEq> Grid<T> {
-    /// Constructs a new layout flag util.
+    /// Constructs a new grid.
     pub fn build(numbers: &Vec<Vec<Item<T>>>, length: usize) -> Self {
         let lines = numbers.iter()
             .map(|col| Layout::build(col, length))
             .collect();
 
-        Self {
-            flagged: true,
-            lines
-        }
+        Self { lines }
     }
 
-    pub fn len(&self) -> usize {
-        self.lines.len()
-    }
-
+    /// Updates a line if it has been flagged as changed.
     pub fn update(&mut self, index: usize, line: &mut impl Line<T>) -> Result<(), Error> {
         let layout = &mut self.lines[index];
 
@@ -38,6 +31,9 @@ impl<T: Copy + PartialEq> Grid<T> {
         Ok(())
     }
 
+    /// Finds an unsolved chain.
+    ///
+    /// Tuple: `(color, line, cell)`
     pub fn find_unsolved(&self) -> Option<(T, usize, usize)> {
         for line in 0..self.lines.len() {
             match self.lines[line].find_unsolved() {
@@ -51,15 +47,15 @@ impl<T: Copy + PartialEq> Grid<T> {
 
 impl<'a, T: Copy> Flag for Grid<T> {
     fn flagged(&self) -> bool {
-        self.flagged
-    }
-
-    fn clear(&mut self) {
-        self.flagged = false;
+        for line in &self.lines {
+            if line.flagged() {
+                return true;
+            }
+        }
+        false
     }
 
     fn flag(&mut self, index: usize) {
-        self.flagged = true;
         self.lines[index].flag();
     }
 }

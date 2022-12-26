@@ -28,7 +28,7 @@ impl<T: Copy> Layout<T> {
         self.flagged
     }
 
-    /// Removes the dirty flag.
+    /// Clears the [Self::flagged] flag.
     pub fn clear(&mut self) {
         self.flagged = false;
     }
@@ -53,6 +53,8 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Searches an unsolved chain and returns a free cell with the color of the chain.
+    ///
+    /// Tuple: `(color, cell)`
     pub fn find_unsolved(&self) -> Option<(T, usize)> {
         for chain in &self.data {
             if !chain.solved() {

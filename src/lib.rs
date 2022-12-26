@@ -15,7 +15,10 @@ pub enum Error {
     Canceled
 }
 
+/// A trait for an arbitrary cancellation token.
+/// Use `()`, if you don't have any cancellation token.
 pub trait Token {
+    /// Returns [Err] with [Error::Canceled], if the operation has been cancelled.
     fn check(&self) -> Result<(), Error>;
 }
 
