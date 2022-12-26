@@ -1,10 +1,11 @@
-use crate::algo::line::{Flags, Layout};
+use crate::algo::flag::Flag;
+use crate::algo::line::Layout;
 use crate::line::Line;
 
 /// Flag utility used in [Branch::try_solve_cols] and [Branch::try_solve_rows].
 #[derive(Clone)]
 pub struct Grid<T> {
-    changed: bool,
+    flagged: bool,
     lines: Vec<Layout<T>>
 }
 
@@ -16,31 +17,22 @@ impl<T: Copy + PartialEq> Grid<T> {
             .collect();
 
         Self {
-            changed: true,
+            flagged: true,
             lines
         }
-    }
-
-    /// Returns whether or not any layout was flagged.
-    pub fn changed(&self) -> bool {
-        self.changed
-    }
-
-    pub fn clear(&mut self) {
-        self.changed = false;
     }
 
     pub fn len(&self) -> usize {
         self.lines.len()
     }
 
-    pub fn update(&mut self, index: usize, line: &mut impl Line<T>, flags: &mut impl Flags) -> Result<(), ()> {
+    pub fn update(&mut self, index: usize, line: &mut impl Line<T>) -> Result<(), ()> {
         let layout = &mut self.lines[index];
 
         if layout.flagged() {
             layout.clear();
             layout.update(line)?;
-            layout.write(line, flags);
+            layout.write(line);
         }
         Ok(())
     }
@@ -56,9 +48,17 @@ impl<T: Copy + PartialEq> Grid<T> {
     }
 }
 
-impl<'a, T> Flags for Grid<T> {
+impl<'a, T> Flag for Grid<T> {
+    fn flagged(&self) -> bool {
+        self.flagged
+    }
+
+    fn clear(&mut self) {
+        self.flagged = false;
+    }
+
     fn flag(&mut self, index: usize) {
-        self.changed = true;
+        self.flagged = true;
         self.lines[index].flag();
     }
 }

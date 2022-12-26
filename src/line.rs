@@ -1,13 +1,20 @@
+use std::ops::Range;
 use crate::{Cell, Nonogram};
 
 /// A reference to a row or column of a [Nonogram].
 /// Used to reduce code duplication.
-pub trait Line<T> {
+pub trait Line<T: Copy> {
     fn len(&self) -> usize;
 
     fn get(&self, index: usize) -> Cell<T>;
 
     fn set(&mut self, index: usize, value: Cell<T>);
+
+    fn fill(&mut self, range: Range<usize>, value: Cell<T>) {
+        for i in range {
+            self.set(i, value);
+        }
+    }
 }
 
 /// A reference to a column. See [Line].

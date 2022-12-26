@@ -1,11 +1,12 @@
-use crate::algo::line::Flags;
 use crate::line::{Col, Row};
 use crate::{Cell, Nonogram};
+use crate::algo::flag::{Flag, FlagLine};
 use crate::algo::grid::Grid;
 
 pub mod chain;
 pub mod line;
 mod grid;
+mod flag;
 
 /// A branch which might result in a complete nonogram.
 #[derive(Clone)]
@@ -56,7 +57,7 @@ impl<T: Copy + PartialEq> Branch<T> {
 
     /// Tries to solve a branch without forking.
     fn try_solve(&mut self) -> Result<(), ()> {
-        while self.cols.changed() || self.rows.changed() {
+        while self.cols.flagged() || self.rows.flagged() {
             self.try_solve_cols()?;
             self.try_solve_rows()?;
         }
@@ -65,24 +66,22 @@ impl<T: Copy + PartialEq> Branch<T> {
 
     /// Tries to solve all columns.
     fn try_solve_cols(&mut self) -> Result<(), ()> {
-        self.rows.clear();
-
         for i in 0..self.rows.len() {
-            let line = &mut Col::new(&mut self.nonogram, i);
+            let line = Col::new(&mut self.nonogram, i);
+            let flag_line = &mut FlagLine::using(line, &mut self.rows);
 
-            self.cols.update(i, line, &mut self.rows)?;
+            self.cols.update(i, flag_line)?;
         }
         Ok(())
     }
 
     /// Tries to solve all rows.
     fn try_solve_rows(&mut self) -> Result<(), ()> {
-        self.cols.clear();
-
         for i in 0..self.rows.len() {
-            let line = &mut Row::new(&mut self.nonogram, i);
+            let line = Row::new(&mut self.nonogram, i);
+            let flag_line = &mut FlagLine::using(line, &mut self.cols);
 
-            self.rows.update(i, line, &mut self.cols)?;
+            self.rows.update(i, flag_line)?;
         }
         Ok(())
     }

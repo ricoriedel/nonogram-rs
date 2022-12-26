@@ -1,4 +1,3 @@
-use std::ops::Range;
 use crate::algo::chain::Chain;
 use crate::line::Line;
 use crate::Cell;
@@ -8,11 +7,6 @@ use crate::Cell;
 pub struct Layout<T> {
     data: Vec<Chain<T>>,
     flagged: bool,
-}
-
-/// Used to flag altered crossing lines as dirty.
-pub trait Flags {
-    fn flag(&mut self, index: usize);
 }
 
 impl<T> Layout<T> {
@@ -53,9 +47,9 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Writes conclusions from the contained metadata onto a line.
-    pub fn write(&self, line: &mut impl Line<T>, flags: &mut impl Flags) {
-        self.write_boxes(line, flags);
-        self.write_spaces(line, flags);
+    pub fn write(&self, line: &mut impl Line<T>) {
+        self.write_boxes(line);
+        self.write_spaces(line);
     }
 
     /// Searches an unsolved chain and returns a free cell with the color of the chain.
@@ -161,41 +155,26 @@ impl<T: Copy + PartialEq> Layout<T> {
 
 
     /// Writes all known boxes to the line.
-    fn write_boxes(&self, line: &mut impl Line<T>, flags: &mut impl Flags) {
+    fn write_boxes(&self, line: &mut impl Line<T>) {
         for chain in &self.data {
             let start = chain.end() - chain.len();
             let end = chain.start() + chain.len();
             let value = Cell::Box {
                 color: chain.color(),
             };
-            Layout::fill(start..end, value, line, flags);
+            line.fill(start..end, value);
         }
     }
 
     /// Writes all known spaces to the line.
-    fn write_spaces(&self, line: &mut impl Line<T>, flags: &mut impl Flags) {
+    fn write_spaces(&self, line: &mut impl Line<T>) {
         let mut start = 0;
 
         for chain in &self.data {
-            Layout::fill(start..chain.start(), Cell::Space, line, flags);
+            line.fill(start..chain.start(), Cell::Space);
             start = chain.end();
         }
-        Layout::fill(start..line.len(), Cell::Space, line, flags);
-    }
-
-    /// Fills a given range with a given value and reports changes.
-    fn fill(
-        range: Range<usize>,
-        value: Cell<T>,
-        line: &mut impl Line<T>,
-        flags: &mut impl Flags,
-    ) {
-        for i in range {
-            if line.get(i) != value {
-                line.set(i, value);
-                flags.flag(i);
-            }
-        }
+        line.fill(start..line.len(), Cell::Space);
     }
 }
 
@@ -203,16 +182,6 @@ impl<T: Copy + PartialEq> Layout<T> {
 mod test {
     use super::*;
     use crate::Cell::*;
-
-    impl Flags for Vec<bool> {
-        fn flag(&mut self, index: usize) {
-            self[index] = true;
-        }
-    }
-
-    impl Flags for () {
-        fn flag(&mut self, _: usize) {}
-    }
 
     #[test]
     fn layout_flagged_true_on_creation() {
@@ -256,7 +225,7 @@ mod test {
         ];
         let mut layout = Layout::new(data, line.len());
         layout.update(line).unwrap();
-        layout.write(line, &mut ());
+        layout.write(line);
 
         assert!(matches!(line[0], Cell::Box { color: 'a' }));
         assert!(matches!(line[1], Cell::Box { color: 'a' }));
@@ -280,7 +249,7 @@ mod test {
         ];
         let mut layout = Layout::new(data, line.len());
         layout.update(line).unwrap();
-        layout.write(line, &mut ());
+        layout.write(line);
 
         assert!(matches!(line[0], Box { color: 'a' }));
         assert!(matches!(line[1], Box { color: 'a' }));
@@ -306,7 +275,7 @@ mod test {
         ];
         let mut layout = Layout::new(data, line.len());
         layout.update(line).unwrap();
-        layout.write(line, &mut ());
+        layout.write(line);
 
         assert!(matches!(line[0], Empty));
         assert!(matches!(line[1], Box { color: 'a' }));
@@ -333,7 +302,7 @@ mod test {
         ];
         let mut layout = Layout::new(data, line.len());
         layout.update(line).unwrap();
-        layout.write(line, &mut ());
+        layout.write(line);
 
         assert!(matches!(line[0], Space));
         assert!(matches!(line[1], Space));
@@ -361,7 +330,7 @@ mod test {
         ];
         let mut layout = Layout::new(data, line.len());
         layout.update(line).unwrap();
-        layout.write(line, &mut ());
+        layout.write(line);
 
         assert!(matches!(line[0], Space));
         assert!(matches!(line[1], Box { color: 'b' }));
@@ -387,7 +356,7 @@ mod test {
         ];
         let mut layout = Layout::new(data, line.len());
         layout.update(line).unwrap();
-        layout.write(line, &mut ());
+        layout.write(line);
 
         assert!(matches!(line[0], Box { color: 'a' }));
         assert!(matches!(line[1], Box { color: 'a' }));
@@ -414,7 +383,7 @@ mod test {
         ];
         let mut layout = Layout::new(data, line.len());
         layout.update(line).unwrap();
-        layout.write(line, &mut ());
+        layout.write(line);
 
         assert!(matches!(line[0], Space));
         assert!(matches!(line[1], Box { color: 'a' }));
@@ -444,7 +413,7 @@ mod test {
         ];
         let mut layout = Layout::new(data, line.len());
         layout.update(line).unwrap();
-        layout.write(line, &mut ());
+        layout.write(line);
 
         assert!(matches!(line[0], Box { color: 'a' }));
         assert!(matches!(line[1], Space));
@@ -454,46 +423,6 @@ mod test {
         assert!(matches!(line[5], Box { color: 'a' }));
         assert!(matches!(line[6], Space));
         assert!(matches!(line[7], Box { color: 'a' }));
-    }
-
-    #[test]
-    fn layout_write_spaces_flags() {
-        let line: &mut Vec<Cell<()>> = &mut vec![
-            Empty,
-            Space,
-            Empty,
-        ];
-        let data = vec![];
-        let flags = &mut vec![false; line.len()];
-
-        let mut layout = Layout::new(data, line.len());
-        layout.update(line).unwrap();
-        layout.write(line, flags);
-
-        assert!(flags[0]);
-        assert!(!flags[1]);
-        assert!(flags[2]);
-    }
-
-    #[test]
-    fn layout_write_boxes_flags() {
-        let line = &mut vec![
-            Empty,
-            Empty,
-            Box { color: 'a' },
-        ];
-        let data = vec![
-            ('a', 3)
-        ];
-        let flags = &mut vec![false; line.len()];
-
-        let mut layout = Layout::new(data, line.len());
-        layout.update(line).unwrap();
-        layout.write(line, flags);
-
-        assert!(flags[0]);
-        assert!(flags[1]);
-        assert!(!flags[2]);
     }
 
     #[test]
