@@ -157,12 +157,7 @@ impl<T: Copy + PartialEq> Layout<T> {
     /// Writes all known boxes to the line.
     fn write_boxes(&self, line: &mut impl Line<T>) {
         for chain in &self.data {
-            let start = chain.end() - chain.len();
-            let end = chain.start() + chain.len();
-            let value = Cell::Box {
-                color: chain.color(),
-            };
-            line.fill(start..end, value);
+            line.fill(chain.known_cells(), Cell::Box { color: chain.color() });
         }
     }
 

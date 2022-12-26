@@ -1,3 +1,4 @@
+use std::ops::Range;
 use crate::line::Line;
 use crate::Cell;
 
@@ -28,11 +29,6 @@ impl<T: Copy + PartialEq> Chain<T> {
         self.color
     }
 
-    /// Returns the length.
-    pub fn len(&self) -> usize {
-        self.len
-    }
-
     /// Returns the start of the possible range.
     pub fn start(&self) -> usize {
         self.start
@@ -55,6 +51,14 @@ impl<T: Copy + PartialEq> Chain<T> {
     /// Returns the end of the possible range.
     pub fn end(&self) -> usize {
         self.end
+    }
+
+    /// Returns the range of cells which must be filled.
+    pub fn known_cells(&self) -> Range<usize> {
+        let start = self.end - self.len;
+        let end = self.start + self.len;
+
+        start..end
     }
 
     /// Sets the end of the possible range.
@@ -208,7 +212,6 @@ mod test {
         let c = Chain::new(4, 2, 3, 7);
 
         assert_eq!(4, c.color());
-        assert_eq!(2, c.len());
         assert_eq!(3, c.start());
         assert_eq!(7, c.end());
     }
