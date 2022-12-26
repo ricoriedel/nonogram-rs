@@ -1,5 +1,5 @@
 use crate::line::{Col, Row};
-use crate::{Cell, Nonogram};
+use crate::{Cell, Item, Nonogram};
 use crate::algo::flag::{Flag, FlagLine};
 use crate::algo::grid::Grid;
 
@@ -18,7 +18,7 @@ pub struct Branch<T> {
 
 impl<T: Copy + PartialEq> Branch<T> {
     /// Constructs a new branch from a layout.
-    pub fn build(col_grid: &Vec<Vec<(T, usize)>>, row_grid: &Vec<Vec<(T, usize)>>) -> Self {
+    pub fn build(col_grid: &Vec<Vec<Item<T>>>, row_grid: &Vec<Vec<Item<T>>>) -> Self {
         let nonogram = Nonogram::new(col_grid.len(), row_grid.len());
         let cols = Grid::build(col_grid, nonogram.rows());
         let rows = Grid::build(row_grid, nonogram.cols());
@@ -120,14 +120,14 @@ mod test {
     #[test]
     fn branch_solve() {
         let cols = vec![
-            vec![('a', 1), ('b', 1)],
-            vec![('b', 1)],
-            vec![('a', 1), ('b', 2)],
+            vec![Item::new('a', 1), Item::new('b', 1)],
+            vec![Item::new('b', 1)],
+            vec![Item::new('a', 1), Item::new('b', 2)],
         ];
         let rows = vec![
-            vec![('a', 1), ('a', 1)],
-            vec![('b', 3)],
-            vec![('b', 1)],
+            vec![Item::new('a', 1), Item::new('a', 1)],
+            vec![Item::new('b', 3)],
+            vec![Item::new('b', 1)],
         ];
         let branch = Branch::build(&cols, &rows);
         let nonogram = branch.solve().unwrap();
@@ -148,10 +148,10 @@ mod test {
     #[test]
     fn branch_solve_invalid() {
         let cols = vec![
-            vec![('a', 1)],
+            vec![Item { color: 'a', len: 1 }],
         ];
         let rows = vec![
-            vec![('b', 1)],
+            vec![Item { color: 'b', len: 1 }],
         ];
         let branch = Branch::build(&cols, &rows);
 
@@ -161,11 +161,11 @@ mod test {
     #[test]
     fn branch_solve_recursion() {
         let cols = vec![
-            vec![('a', 1)],
-            vec![('a', 1)],
-            vec![('a', 1)],
-            vec![('a', 1)],
-            vec![('a', 1)],
+            vec![Item::new('a', 1)],
+            vec![Item::new('a', 1)],
+            vec![Item::new('a', 1)],
+            vec![Item::new('a', 1)],
+            vec![Item::new('a', 1)],
         ];
         let branch = Branch::build(&cols, &cols);
 

@@ -1,5 +1,6 @@
 use crate::algo::flag::Flag;
 use crate::algo::line::Layout;
+use crate::Item;
 use crate::line::Line;
 
 /// Flag utility used in [Branch::try_solve_cols] and [Branch::try_solve_rows].
@@ -11,8 +12,8 @@ pub struct Grid<T> {
 
 impl<T: Copy + PartialEq> Grid<T> {
     /// Constructs a new layout flag util.
-    pub fn build(grid_numbers: &Vec<Vec<(T, usize)>>, length: usize) -> Self {
-        let lines = grid_numbers.into_iter()
+    pub fn build(numbers: &Vec<Vec<Item<T>>>, length: usize) -> Self {
+        let lines = numbers.iter()
             .map(|col| Layout::build(col, length))
             .collect();
 

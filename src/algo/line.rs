@@ -1,6 +1,6 @@
 use crate::algo::chain::Chain;
 use crate::line::Line;
-use crate::Cell;
+use crate::{Cell, Item};
 
 /// Metadata about multiple [Chain]s one the same line.
 #[derive(Clone, Debug)]
@@ -11,10 +11,10 @@ pub struct Layout<T> {
 
 impl<T: Copy> Layout<T> {
     /// Constructs a new layout.
-    pub fn build(numbers: &Vec<(T, usize)>, end: usize) -> Self {
-        let data = numbers.into_iter()
-            .filter(|num| num.1 > 0)
-            .map(|c| Chain::new(c.0, c.1, 0, end))
+    pub fn build(numbers: &Vec<Item<T>>, end: usize) -> Self {
+        let data = numbers.iter()
+            .filter(|num| num.len > 0)
+            .map(|c| Chain::new(c.color, c.len, 0, end))
             .collect();
 
         Self {
@@ -177,6 +177,7 @@ impl<T: Copy + PartialEq> Layout<T> {
 mod test {
     use super::*;
     use crate::Cell::*;
+    use crate::Item;
 
     #[test]
     fn layout_flagged_true_on_creation() {
@@ -214,9 +215,9 @@ mod test {
             Empty,
         ];
         let data = vec![
-            ('a', 2),
-            ('b', 2),
-            ('c', 1),
+            Item::new('a', 2),
+            Item::new('b', 2),
+            Item::new('c', 1),
         ];
         let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
@@ -239,8 +240,8 @@ mod test {
             Empty,
         ];
         let data = vec![
-            ('a', 2),
-            ('a', 2),
+            Item::new('a', 2),
+            Item::new('a', 2),
         ];
         let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
@@ -265,8 +266,8 @@ mod test {
             Empty,
         ];
         let data = vec![
-            ('a', 3),
-            ('a', 2),
+            Item::new('a', 3),
+            Item::new('a', 2),
         ];
         let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
@@ -293,7 +294,7 @@ mod test {
             Empty,
         ];
         let data = vec![
-            ('a', 3)
+            Item::new('a', 3)
         ];
         let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
@@ -319,9 +320,9 @@ mod test {
             Empty,
         ];
         let data = vec![
-            ('b', 1),
-            ('a', 2),
-            ('b', 1),
+            Item::new('b', 1),
+            Item::new('a', 2),
+            Item::new('b', 1),
         ];
         let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
@@ -346,8 +347,8 @@ mod test {
             Empty,
         ];
         let data = vec![
-            ('a', 2),
-            ('a', 2),
+            Item::new('a', 2),
+            Item::new('a', 2),
         ];
         let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
@@ -372,9 +373,9 @@ mod test {
             Empty,
         ];
         let data = vec![
-            ('a', 1),
-            ('b', 2),
-            ('a', 1),
+            Item::new('a', 1),
+            Item::new('b', 2),
+            Item::new('a', 1),
         ];
         let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
@@ -401,10 +402,10 @@ mod test {
             Box { color: 'a' },
         ];
         let data = vec![
-            ('a', 1),
-            ('a', 1),
-            ('a', 1),
-            ('a', 1),
+            Item::new('a', 1),
+            Item::new('a', 1),
+            Item::new('a', 1),
+            Item::new('a', 1),
         ];
         let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
@@ -428,8 +429,8 @@ mod test {
             Box { color: 'a' },
         ];
         let data = vec![
-            ('a', 1),
-            ('a', 1),
+            Item::new('a', 1),
+            Item::new('a', 1),
         ];
         let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
@@ -448,8 +449,8 @@ mod test {
             Box { color: 'b' },
         ];
         let data = vec![
-            ('a', 2),
-            ('b', 1),
+            Item::new('a', 2),
+            Item::new('b', 1),
         ];
         let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
@@ -465,12 +466,12 @@ mod test {
             Empty,
         ];
         let data = vec![
-            ('a', 1),
-            ('a', 0),
-            ('a', 0),
-            ('a', 0),
-            ('a', 0),
-            ('a', 1),
+            Item::new('a', 1),
+            Item::new('a', 0),
+            Item::new('a', 0),
+            Item::new('a', 0),
+            Item::new('a', 0),
+            Item::new('a', 1),
         ];
         let mut layout = Layout::build(&data, line.len());
 
