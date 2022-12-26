@@ -1,4 +1,4 @@
-use crate::line::LineMut;
+use crate::line::Line;
 use crate::Cell;
 
 /// Metadata about a chain of [Cell::Box]s.
@@ -78,12 +78,12 @@ impl<T: Copy + PartialEq> Chain<T> {
 
     /// updates the start by pulling it to a box on the right.
     /// Boxes beyond the [end] parameter are ignored.
-    pub fn update_start_by_box_at_end(&mut self, line: &impl LineMut<T>, end: usize) {
+    pub fn update_start_by_box_at_end(&mut self, line: &impl Line<T>, end: usize) {
         let start = self.start + self.len;
 
         for i in (start..end).rev() {
-            match &line[i] {
-                Cell::Box { color } if color == &self.color => {
+            match line.get(i) {
+                Cell::Box { color } if color == self.color => {
                     self.start = i + 1 - self.len;
                     return;
                 }
@@ -93,12 +93,12 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// Mirror of [Chain::update_start_by_box_at_end].
-    pub fn update_end_by_box_at_start(&mut self, line: &impl LineMut<T>, start: usize) {
+    pub fn update_end_by_box_at_start(&mut self, line: &impl Line<T>, start: usize) {
         let end = self.end - self.len;
 
         for i in start..end {
-            match &line[i] {
-                Cell::Box { color } if color == &self.color => {
+            match line.get(i) {
+                Cell::Box { color } if color == self.color => {
                     self.end = i + self.len;
                     return;
                 }
@@ -109,15 +109,15 @@ impl<T: Copy + PartialEq> Chain<T> {
 
     /// updates the start by pushing it past adjacent same colored boxes.
     /// Fails if the range between start and end gets too small to fit the chain.
-    pub fn update_start_by_adjacent(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
+    pub fn update_start_by_adjacent(&mut self, line: &impl Line<T>) -> Result<(), ()> {
         if self.start == 0 {
             return Ok(());
         }
         let end = self.end - self.len;
 
         for i in self.start..=end {
-            match &line[i - 1] {
-                Cell::Box { color } if color == &self.color => (),
+            match line.get(i - 1) {
+                Cell::Box { color } if color == self.color => (),
                 _ => {
                     self.start = i;
                     return Ok(());
@@ -128,15 +128,15 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// Mirror of [Chain::update_start_by_adjacent].
-    pub fn update_end_by_adjacent(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
+    pub fn update_end_by_adjacent(&mut self, line: &impl Line<T>) -> Result<(), ()> {
         if self.end == line.len() {
             return Ok(());
         }
         let start = self.start + self.len;
 
         for i in (start..=self.end).rev() {
-            match &line[i] {
-                Cell::Box { color } if color == &self.color => (),
+            match line.get(i) {
+                Cell::Box { color } if color == self.color => (),
                 _ => {
                     self.end = i;
                     return Ok(());
@@ -148,15 +148,15 @@ impl<T: Copy + PartialEq> Chain<T> {
 
     /// updates the start by moving it past too narrow gabs (between spaces and other colored boxes).
     /// Fails if the range between start and end gets too small to fit the chain.
-    pub fn update_start_by_gabs(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
+    pub fn update_start_by_gabs(&mut self, line: &impl Line<T>) -> Result<(), ()> {
         let mut count = 0;
 
         for i in self.start..self.end {
-            match &line[i] {
+            match line.get(i) {
                 Cell::Space => {
                     count = 0;
                 }
-                Cell::Box { color } if color != &self.color => {
+                Cell::Box { color } if color != self.color => {
                     count = 0;
                 }
                 _ => {
@@ -173,15 +173,15 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// Mirror of [Chain::update_start_by_gabs].
-    pub fn update_end_by_gabs(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
+    pub fn update_end_by_gabs(&mut self, line: &impl Line<T>) -> Result<(), ()> {
         let mut count = 0;
 
         for i in (self.start..self.end).rev() {
-            match &line[i] {
+            match line.get(i) {
                 Cell::Space => {
                     count = 0;
                 }
-                Cell::Box { color } if color != &self.color => {
+                Cell::Box { color } if color != self.color => {
                     count = 0;
                 }
                 _ => {

@@ -1,5 +1,5 @@
 use crate::algo::line::Flags;
-use crate::line::{ColMut, RowMut};
+use crate::line::{Col, Row};
 use crate::{Cell, Nonogram};
 use crate::algo::grid::Grid;
 
@@ -68,7 +68,7 @@ impl<T: Copy + PartialEq> Branch<T> {
         self.rows.clear();
 
         for i in 0..self.rows.len() {
-            let line = &mut ColMut::new(&mut self.nonogram, i);
+            let line = &mut Col::new(&mut self.nonogram, i);
 
             self.cols.update(i, line, &mut self.rows)?;
         }
@@ -80,7 +80,7 @@ impl<T: Copy + PartialEq> Branch<T> {
         self.cols.clear();
 
         for i in 0..self.rows.len() {
-            let line = &mut RowMut::new(&mut self.nonogram, i);
+            let line = &mut Row::new(&mut self.nonogram, i);
 
             self.rows.update(i, line, &mut self.cols)?;
         }

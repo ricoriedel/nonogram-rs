@@ -1,6 +1,6 @@
 use std::ops::Range;
 use crate::algo::chain::Chain;
-use crate::line::LineMut;
+use crate::line::Line;
 use crate::Cell;
 
 /// Metadata about multiple [Chain]s one the same line.
@@ -47,13 +47,13 @@ impl<T> Layout<T> {
 
 impl<T: Copy + PartialEq> Layout<T> {
     /// Updates the metadata about the chains based on new clues.
-    pub fn update(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
+    pub fn update(&mut self, line: &impl Line<T>) -> Result<(), ()> {
         self.update_starts(line)?;
         self.update_ends(line)
     }
 
     /// Writes conclusions from the contained metadata onto a line.
-    pub fn write(&self, line: &mut impl LineMut<T>, flags: &mut impl Flags) {
+    pub fn write(&self, line: &mut impl Line<T>, flags: &mut impl Flags) {
         self.write_boxes(line, flags);
         self.write_spaces(line, flags);
     }
@@ -74,7 +74,7 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Updates the range start of all chains.
-    fn update_starts(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
+    fn update_starts(&mut self, line: &impl Line<T>) -> Result<(), ()> {
         // To avoid an integer overflow at minus one, we iterate with an index offset by plus one.
         let mut position = self.data.len();
 
@@ -95,7 +95,7 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Updates the range end of all chains.
-    fn update_ends(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
+    fn update_ends(&mut self, line: &impl Line<T>) -> Result<(), ()> {
         let mut index = 0;
 
         while index < self.data.len() {
@@ -140,7 +140,7 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Updates the start of a single chain.
-    fn update_start(&mut self, index: usize, line: &impl LineMut<T>, end: usize, same_color: bool) -> Result<usize, ()> {
+    fn update_start(&mut self, index: usize, line: &impl Line<T>, end: usize, same_color: bool) -> Result<usize, ()> {
         let chain = &mut self.data[index];
         chain.update_start_by_box_at_end(line, end);
         chain.update_start_by_adjacent(line)?;
@@ -150,7 +150,7 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Updates the end of a single chain.
-    fn update_end(&mut self, index: usize, line: &impl LineMut<T>, start: usize, same_color: bool) -> Result<usize, ()> {
+    fn update_end(&mut self, index: usize, line: &impl Line<T>, start: usize, same_color: bool) -> Result<usize, ()> {
         let chain = &mut self.data[index];
         chain.update_end_by_box_at_start(line, start);
         chain.update_end_by_adjacent(line)?;
@@ -161,7 +161,7 @@ impl<T: Copy + PartialEq> Layout<T> {
 
 
     /// Writes all known boxes to the line.
-    fn write_boxes(&self, line: &mut impl LineMut<T>, flags: &mut impl Flags) {
+    fn write_boxes(&self, line: &mut impl Line<T>, flags: &mut impl Flags) {
         for chain in &self.data {
             let start = chain.end() - chain.len();
             let end = chain.start() + chain.len();
@@ -173,7 +173,7 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Writes all known spaces to the line.
-    fn write_spaces(&self, line: &mut impl LineMut<T>, flags: &mut impl Flags) {
+    fn write_spaces(&self, line: &mut impl Line<T>, flags: &mut impl Flags) {
         let mut start = 0;
 
         for chain in &self.data {
@@ -187,12 +187,12 @@ impl<T: Copy + PartialEq> Layout<T> {
     fn fill(
         range: Range<usize>,
         value: Cell<T>,
-        line: &mut impl LineMut<T>,
+        line: &mut impl Line<T>,
         flags: &mut impl Flags,
     ) {
         for i in range {
-            if line[i] != value {
-                line[i] = value;
+            if line.get(i) != value {
+                line.set(i, value);
                 flags.flag(i);
             }
         }

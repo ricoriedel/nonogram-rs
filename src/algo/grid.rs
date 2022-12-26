@@ -1,5 +1,5 @@
 use crate::algo::line::{Flags, Layout};
-use crate::line::LineMut;
+use crate::line::Line;
 
 /// Flag utility used in [Branch::try_solve_cols] and [Branch::try_solve_rows].
 #[derive(Clone)]
@@ -34,7 +34,7 @@ impl<T: Copy + PartialEq> Grid<T> {
         self.lines.len()
     }
 
-    pub fn update(&mut self, index: usize, line: &mut impl LineMut<T>, flags: &mut impl Flags) -> Result<(), ()> {
+    pub fn update(&mut self, index: usize, line: &mut impl Line<T>, flags: &mut impl Flags) -> Result<(), ()> {
         let layout = &mut self.lines[index];
 
         if layout.flagged() {
