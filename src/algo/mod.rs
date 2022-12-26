@@ -39,17 +39,19 @@ impl<T: Copy + PartialEq> Branch<T> {
 
         while let Some(mut branch) = branches.pop() {
             match branch.try_solve(&token) {
-                Ok(_) => (),
-                Err(_) => continue,
-            }
-            match branch.find_unsolved() {
-                None => return Ok(branch.nonogram),
-                Some((color, col, row)) => {
-                    let (a, b) = branch.fork(color, col, row);
+                Ok(_) => {
+                    match branch.find_unsolved() {
+                        None => return Ok(branch.nonogram),
+                        Some((color, col, row)) => {
+                            let (a, b) = branch.fork(color, col, row);
 
-                    branches.push(a);
-                    branches.push(b);
-                }
+                            branches.push(a);
+                            branches.push(b);
+                        }
+                    }
+                },
+                Err(Error::Canceled) => return Err(Error::Canceled),
+                Err(Error::Invalid) => (),
             }
         }
         Err(Error::Invalid)
