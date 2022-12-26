@@ -9,12 +9,12 @@ pub struct Layout<T> {
     flagged: bool,
 }
 
-impl<T> Layout<T> {
+impl<T: Copy> Layout<T> {
     /// Constructs a new layout.
-    pub fn new(numbers: Vec<(T, usize)>, line_length: usize) -> Self {
+    pub fn build(numbers: &Vec<(T, usize)>, end: usize) -> Self {
         let data = numbers.into_iter()
             .filter(|num| num.1 > 0)
-            .map(|num| Chain::new(num.0, num.1, 0, line_length))
+            .map(|c| Chain::new(c.0, c.1, 0, end))
             .collect();
 
         Self {
@@ -180,14 +180,14 @@ mod test {
 
     #[test]
     fn layout_flagged_true_on_creation() {
-        let layout: Layout<()> = Layout::new(Vec::new(), 0);
+        let layout: Layout<()> = Layout::build(&Vec::new(), 0);
 
         assert!(layout.flagged());
     }
 
     #[test]
     fn layout_clear() {
-        let mut layout: Layout<()> = Layout::new(Vec::new(), 0);
+        let mut layout: Layout<()> = Layout::build(&Vec::new(), 0);
 
         layout.clear();
 
@@ -196,7 +196,7 @@ mod test {
 
     #[test]
     fn layout_flag() {
-        let mut layout: Layout<()> = Layout::new(Vec::new(), 0);
+        let mut layout: Layout<()> = Layout::build(&Vec::new(), 0);
 
         layout.clear();
         layout.flag();
@@ -218,7 +218,7 @@ mod test {
             ('b', 2),
             ('c', 1),
         ];
-        let mut layout = Layout::new(data, line.len());
+        let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
         layout.write(line);
 
@@ -242,7 +242,7 @@ mod test {
             ('a', 2),
             ('a', 2),
         ];
-        let mut layout = Layout::new(data, line.len());
+        let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
         layout.write(line);
 
@@ -268,7 +268,7 @@ mod test {
             ('a', 3),
             ('a', 2),
         ];
-        let mut layout = Layout::new(data, line.len());
+        let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
         layout.write(line);
 
@@ -295,7 +295,7 @@ mod test {
         let data = vec![
             ('a', 3)
         ];
-        let mut layout = Layout::new(data, line.len());
+        let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
         layout.write(line);
 
@@ -323,7 +323,7 @@ mod test {
             ('a', 2),
             ('b', 1),
         ];
-        let mut layout = Layout::new(data, line.len());
+        let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
         layout.write(line);
 
@@ -349,7 +349,7 @@ mod test {
             ('a', 2),
             ('a', 2),
         ];
-        let mut layout = Layout::new(data, line.len());
+        let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
         layout.write(line);
 
@@ -376,7 +376,7 @@ mod test {
             ('b', 2),
             ('a', 1),
         ];
-        let mut layout = Layout::new(data, line.len());
+        let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
         layout.write(line);
 
@@ -406,7 +406,7 @@ mod test {
             ('a', 1),
             ('a', 1),
         ];
-        let mut layout = Layout::new(data, line.len());
+        let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
         layout.write(line);
 
@@ -431,7 +431,7 @@ mod test {
             ('a', 1),
             ('a', 1),
         ];
-        let mut layout = Layout::new(data, line.len());
+        let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
 
         assert!(matches!(layout.find_unsolved(), None));
@@ -451,7 +451,7 @@ mod test {
             ('a', 2),
             ('b', 1),
         ];
-        let mut layout = Layout::new(data, line.len());
+        let mut layout = Layout::build(&data, line.len());
         layout.update(line).unwrap();
 
         assert!(matches!(layout.find_unsolved(), Some(('a', 1))));
@@ -472,7 +472,7 @@ mod test {
             ('a', 0),
             ('a', 1),
         ];
-        let mut layout = Layout::new(data, line.len());
+        let mut layout = Layout::build(&data, line.len());
 
         assert!(layout.update(line).is_ok());
     }

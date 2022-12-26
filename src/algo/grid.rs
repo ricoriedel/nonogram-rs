@@ -11,9 +11,9 @@ pub struct Grid<T> {
 
 impl<T: Copy + PartialEq> Grid<T> {
     /// Constructs a new layout flag util.
-    pub fn new(grid_numbers: Vec<Vec<(T, usize)>>, length: usize) -> Self {
+    pub fn build(grid_numbers: &Vec<Vec<(T, usize)>>, length: usize) -> Self {
         let lines = grid_numbers.into_iter()
-            .map(|col| Layout::new(col, length))
+            .map(|col| Layout::build(col, length))
             .collect();
 
         Self {
@@ -48,7 +48,7 @@ impl<T: Copy + PartialEq> Grid<T> {
     }
 }
 
-impl<'a, T> Flag for Grid<T> {
+impl<'a, T: Copy> Flag for Grid<T> {
     fn flagged(&self) -> bool {
         self.flagged
     }

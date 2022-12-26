@@ -110,8 +110,8 @@ impl<T: Copy + PartialEq> Layout<T> {
         Self { cols, rows }
     }
 
-    pub fn solve(self) -> Result<Nonogram<T>, ()> {
-        Branch::new(self.cols, self.rows).solve()
+    pub fn solve(&self) -> Result<Nonogram<T>, ()> {
+        Branch::build(&self.cols, &self.rows).solve()
     }
 }
 

@@ -18,10 +18,10 @@ pub struct Branch<T> {
 
 impl<T: Copy + PartialEq> Branch<T> {
     /// Constructs a new branch from a layout.
-    pub fn new(col_grid: Vec<Vec<(T, usize)>>, row_grid: Vec<Vec<(T, usize)>>) -> Self {
+    pub fn build(col_grid: &Vec<Vec<(T, usize)>>, row_grid: &Vec<Vec<(T, usize)>>) -> Self {
         let nonogram = Nonogram::new(col_grid.len(), row_grid.len());
-        let cols = Grid::new(col_grid, nonogram.rows());
-        let rows = Grid::new(row_grid, nonogram.cols());
+        let cols = Grid::build(col_grid, nonogram.rows());
+        let rows = Grid::build(row_grid, nonogram.cols());
 
         Self {
             cols,
@@ -129,7 +129,7 @@ mod test {
             vec![('b', 3)],
             vec![('b', 1)],
         ];
-        let branch = Branch::new(cols, rows);
+        let branch = Branch::build(&cols, &rows);
         let nonogram = branch.solve().unwrap();
 
         assert!(matches!(nonogram[(0, 0)], Box { color: 'a' }));
@@ -153,7 +153,7 @@ mod test {
         let rows = vec![
             vec![('b', 1)],
         ];
-        let branch = Branch::new(cols, rows);
+        let branch = Branch::build(&cols, &rows);
 
         assert!(branch.solve().is_err());
     }
@@ -167,14 +167,7 @@ mod test {
             vec![('a', 1)],
             vec![('a', 1)],
         ];
-        let rows = vec![
-            vec![('a', 1)],
-            vec![('a', 1)],
-            vec![('a', 1)],
-            vec![('a', 1)],
-            vec![('a', 1)],
-        ];
-        let branch = Branch::new(cols, rows);
+        let branch = Branch::build(&cols, &cols);
 
         assert!(branch.solve().is_ok());
     }
