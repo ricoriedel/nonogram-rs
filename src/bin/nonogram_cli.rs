@@ -6,11 +6,8 @@ use crossterm::{ExecutableCommand, QueueableCommand};
 use crossterm::style::{Color, Print, SetForegroundColor};
 
 #[derive(Parser)]
-#[clap(name = env!("CARGO_BIN_NAME"))]
-#[clap(version = env!("CARGO_PKG_VERSION"))]
-#[clap(about = include_str!("ABOUT"))]
-#[clap(author = include_str!("AUTHOR"))]
-#[clap(propagate_version = true)]
+#[command(version)]
+#[command(about = include_str!("ABOUT"))]
 struct Args {
     #[clap(subcommand)]
     command: Command,
