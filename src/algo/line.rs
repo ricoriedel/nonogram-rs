@@ -76,19 +76,19 @@ impl<T: Copy + PartialEq> Layout<T> {
     /// Updates the range start of all chains.
     fn update_starts(&mut self, line: &impl LineMut<T>) -> Result<(), ()> {
         // To avoid an integer overflow at minus one, we iterate with an index offset by plus one.
-        let mut right_index = self.data.len();
+        let mut position = self.data.len();
 
-        while right_index > 0 {
-            let index = right_index - 1;
+        while position > 0 {
+            let index = position - 1;
             let (right_start, same_color) = self.check_right(index, line.len());
             let first_start = self.update_start(index, line, right_start, same_color)?;
 
             if first_start <= right_start {
-                right_index -= 1;
+                position -= 1;
             } else {
-                self.data[right_index].set_start(first_start);
+                self.data[position].set_start(first_start);
 
-                right_index += 1;
+                position += 1;
             }
         }
         Ok(())
