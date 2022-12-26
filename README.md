@@ -11,20 +11,20 @@ Features:
 Examples of how to use this library can be found in the `tests/` directory.
 
 ## Command-line interface
-This library includes a CLI called `nonosolver` as a binary target.
+This library includes a CLI called `nonogram-cli` as a binary target.
 
 ```shell
-cargo build --bin nonosolver --all-features
+cargo build --bin nonogram-cli --all-features
 ```
 ```shell
 # Solve
-cat layout.json | ./nonosolver solve > result.json
+cat layout.json | ./nonogram-cli solve > result.json
 
 # Show
-cat result.json | ./nonoslver show
+cat result.json | ./nonogram-cli show
 
 # Both in one line
-cat layout.json | ./nonoslver solve | ./nonosolver show
+cat layout.json | ./nonogram-cli solve | ./nonogram-cli show
 ```
 #### Example layout
 ```json
