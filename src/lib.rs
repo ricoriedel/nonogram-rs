@@ -1,5 +1,4 @@
-pub mod line;
-
+mod line;
 mod algo;
 
 #[cfg(feature = "serde")]
