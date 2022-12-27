@@ -1,31 +1,23 @@
+use crate::algo::grid::Grid;
 use crate::Cell;
 use crate::line::Line;
 
-/// Used to flag intersecting lines as changed.
-pub trait Flag {
-    /// Returns whether or not any line is flagged.
-    fn flagged(&self) -> bool;
-
-    /// Flags a line and this object as changed.
-    fn flag(&mut self, index: usize);
-}
-
 /// A wrapper for [Line] which flags changed intersecting lines.
-pub struct FlagLine<'a, TLine, TFlag> {
+pub struct FlagLine<'a, TValue, TLine> {
     line: TLine,
-    flag: &'a mut TFlag,
+    grid: &'a mut Grid<TValue>,
 }
 
-impl<'a, TLine, TFlag: Flag> FlagLine<'a, TLine, TFlag> {
+impl<'a, TValue, TLine> FlagLine<'a, TValue, TLine> {
     /// Create a new [FlagLine].
     ///
     /// The [Flag] is automatically cleared by this function.
-    pub fn new(line: TLine, flag: &'a mut TFlag) -> Self {
-        Self { line, flag }
+    pub fn new(line: TLine, grid: &'a mut Grid<TValue>) -> Self {
+        Self { line, grid }
     }
 }
 
-impl<'a, TValue: Copy + PartialEq, TLine: Line<TValue>,  TFlag: Flag> Line<TValue> for FlagLine<'a, TLine, TFlag> {
+impl<'a, TValue: Copy + PartialEq, TLine: Line<TValue>> Line<TValue> for FlagLine<'a, TValue, TLine> {
     fn len(&self) -> usize {
         self.line.len()
     }
@@ -37,7 +29,7 @@ impl<'a, TValue: Copy + PartialEq, TLine: Line<TValue>,  TFlag: Flag> Line<TValu
     fn set(&mut self, index: usize, value: Cell<TValue>) {
         if self.line.get(index) != value {
             self.line.set(index, value);
-            self.flag.flag(index);
+            self.grid.flag(index);
         }
     }
 }

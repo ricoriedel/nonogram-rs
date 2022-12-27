@@ -1,6 +1,6 @@
 use crate::line::{Col, Row};
 use crate::{Cell, Error, Item, Nonogram, Token};
-use crate::algo::flag::{Flag, FlagLine};
+use crate::algo::flag::FlagLine;
 use crate::algo::grid::Grid;
 
 pub mod chain;

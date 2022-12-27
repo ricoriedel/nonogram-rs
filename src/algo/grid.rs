@@ -1,4 +1,3 @@
-use crate::algo::flag::Flag;
 use crate::algo::line::Layout;
 use crate::{Error, Item};
 use crate::line::Line;
@@ -17,6 +16,16 @@ impl<T: Copy + PartialEq> Grid<T> {
             .collect();
 
         Self { lines }
+    }
+
+    pub fn flagged(&self) -> bool {
+        self.lines.iter()
+            .map(Layout::flagged)
+            .fold(false, |a, b| a | b)
+    }
+
+    pub fn flag(&mut self, index: usize) {
+        self.lines[index].flag();
     }
 
     /// Updates a line if it has been flagged as changed.
@@ -42,20 +51,5 @@ impl<T: Copy + PartialEq> Grid<T> {
             }
         }
         None
-    }
-}
-
-impl<'a, T: Copy> Flag for Grid<T> {
-    fn flagged(&self) -> bool {
-        for line in &self.lines {
-            if line.flagged() {
-                return true;
-            }
-        }
-        false
-    }
-
-    fn flag(&mut self, index: usize) {
-        self.lines[index].flag();
     }
 }
