@@ -81,7 +81,7 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// updates the start by pulling it to a box on the right.
-    /// Boxes beyond the [end] parameter are ignored.
+    /// Boxes beyond the `end` parameter are ignored.
     pub fn update_start_by_box_at_end(&mut self, line: &impl Line<T>, end: usize) {
         let start = self.start + self.len;
 

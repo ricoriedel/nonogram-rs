@@ -3,7 +3,7 @@ use crate::algo::line::Layout;
 use crate::{Error, Item};
 use crate::line::Line;
 
-/// A grid of numbers used in [Branch::try_solve_cols] and [Branch::try_solve_rows].
+/// A grid of numbers used in [super::Branch::try_solve_cols] and [super::Branch::try_solve_rows].
 #[derive(Clone)]
 pub struct Grid<T> {
     lines: Vec<Layout<T>>

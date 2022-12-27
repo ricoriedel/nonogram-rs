@@ -8,14 +8,14 @@ use serde::{Serialize, Deserialize};
 pub enum Cell<T> {
     /// An unknown value.
     Empty,
-    /// A box with some color of type [T].
+    /// A box with some color of type `T`.
     Box { color: T },
     /// A space ("x") between chains.
     Space,
 }
 
 /// A nonogram with a fix size containing some [Cell]s.
-/// [T] is the type used to represent colors.
+/// `T` is the type used to represent colors.
 /// ```rust
 /// use nonogram_rs::{Nonogram, Cell};
 ///

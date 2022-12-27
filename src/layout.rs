@@ -1,7 +1,5 @@
 #[cfg(feature = "serde")]
 use serde::{Serialize, Deserialize};
-
-use crate::algo::Branch;
 use crate::{Error, Nonogram, Token};
 
 /// An item in a number grid.
@@ -12,6 +10,7 @@ pub struct Item<T> {
 }
 
 impl<T> Item<T> {
+    /// Creates a new item.
     pub fn new(color: T, len: usize) -> Self {
         Self { color, len }
     }
@@ -25,12 +24,14 @@ pub struct Layout<T> {
 }
 
 impl<T: Copy + PartialEq> Layout<T> {
+    /// Creates a new layout.
     pub fn new(cols: Vec<Vec<Item<T>>>, rows: Vec<Vec<Item<T>>>) -> Self {
         Self { cols, rows }
     }
 
+    /// Tries to solve a layout.
     pub fn solve(&self, token: impl Token) -> Result<Nonogram<T>, Error> {
-        Branch::build(&self.cols, &self.rows).solve(token)
+        super::solve(&self.cols, &self.rows, token)
     }
 }
 
