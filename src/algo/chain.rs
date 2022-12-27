@@ -39,6 +39,16 @@ impl<T: Copy + PartialEq> Chain<T> {
         self.start = start;
     }
 
+    /// Returns the end of the possible range.
+    pub fn end(&self) -> usize {
+        self.end
+    }
+
+    /// Sets the end of the possible range.
+    pub fn set_end(&mut self, end: usize) {
+        self.end = end;
+    }
+
     /// Get the first *possible* start of the chain to the right.
     pub fn first_start(&self, same_color: bool) -> usize {
         if same_color {
@@ -48,9 +58,13 @@ impl<T: Copy + PartialEq> Chain<T> {
         }
     }
 
-    /// Returns the end of the possible range.
-    pub fn end(&self) -> usize {
-        self.end
+    /// Get the last *possible* end of the chain to the left.
+    pub fn last_end(&self, same_color: bool) -> usize {
+        if same_color {
+            self.end - self.len - 1
+        } else {
+            self.end - self.len
+        }
     }
 
     /// Returns the range of cells which must be filled.
@@ -59,20 +73,6 @@ impl<T: Copy + PartialEq> Chain<T> {
         let end = self.start + self.len;
 
         start..end
-    }
-
-    /// Sets the end of the possible range.
-    pub fn set_end(&mut self, end: usize) {
-        self.end = end;
-    }
-
-    /// Get the last *possible* end of the chain to the left.
-    pub fn last_end(&self, same_color: bool) -> usize {
-        if same_color {
-            self.end - self.len - 1
-        } else {
-            self.end - self.len
-        }
     }
 
     /// Checks if the exact location of the chain has been found.
@@ -226,6 +226,15 @@ mod test {
     }
 
     #[test]
+    fn chain_set_end() {
+        let mut c = Chain::new(0, 0, 0, 2);
+
+        c.set_end(6);
+
+        assert_eq!(6, c.end());
+    }
+
+    #[test]
     fn chain_first_start_same_color_false() {
         let c = Chain::new(0, 2, 3, 0);
 
@@ -240,15 +249,6 @@ mod test {
     }
 
     #[test]
-    fn chain_set_end() {
-        let mut c = Chain::new(0, 0, 0, 2);
-
-        c.set_end(6);
-
-        assert_eq!(6, c.end());
-    }
-
-    #[test]
     fn chain_last_end_same_color_false() {
         let c = Chain::new(0, 2, 0, 7);
 
@@ -260,6 +260,11 @@ mod test {
         let c = Chain::new(0, 4, 0, 8);
 
         assert_eq!(3, c.last_end(true));
+    }
+
+    #[test]
+    fn chain_known_cells() {
+        assert_eq!(4..6, Chain::new((), 4, 2, 8).known_cells());
     }
 
     #[test]
