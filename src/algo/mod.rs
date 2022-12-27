@@ -71,7 +71,7 @@ impl<T: Copy + PartialEq> Branch<T> {
         self.cols.set(col, row, Cell::Box { color });
         self.rows.set(row, col, Cell::Box { color });
         fork.cols.set(col, row, Cell::Space);
-        fork.cols.set(row, col, Cell::Space);
+        fork.rows.set(row, col, Cell::Space);
 
         (self, fork)
     }
