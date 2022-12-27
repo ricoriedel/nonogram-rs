@@ -1,52 +1,75 @@
-use crate::algo::line::Layout;
-use crate::{Error, Item};
-use crate::line::Line;
+use crate::algo::line::Line;
+use crate::{Cell, Error, Item};
 
-/// A grid of numbers used in [super::Branch::try_solve_cols] and [super::Branch::try_solve_rows].
+/// A group of lines including metadata.
 #[derive(Clone)]
 pub struct Grid<T> {
-    lines: Vec<Layout<T>>
+    lines: Vec<Line<T>>,
 }
 
 impl<T: Copy + PartialEq> Grid<T> {
     /// Constructs a new grid.
     pub fn build(numbers: &Vec<Vec<Item<T>>>, length: usize) -> Self {
         let lines = numbers.iter()
-            .map(|col| Layout::build(col, length))
+            .map(|col| Line::build(col, length))
             .collect();
 
         Self { lines }
     }
 
+    /// Returns whether the grid needs to be updated.
     pub fn flagged(&self) -> bool {
         self.lines.iter()
-            .map(Layout::flagged)
+            .map(Line::flagged)
             .fold(false, |a, b| a | b)
     }
 
-    pub fn flag(&mut self, index: usize) {
-        self.lines[index].flag();
-    }
-
-    /// Updates a line if it has been flagged as changed.
-    pub fn update(&mut self, index: usize, line: &mut impl Line<T>) -> Result<(), Error> {
-        let layout = &mut self.lines[index];
-
-        if layout.flagged() {
-            layout.clear();
-            layout.update(line)?;
-            layout.write(line);
+    /// Updates the metadata and writes changes.
+    pub fn update(&mut self) -> Result<(), Error> {
+        for line in self.lines.iter_mut() {
+            line.update()?;
         }
         Ok(())
+    }
+
+    /// Returns the value of a cell.
+    pub fn get(&self, line: usize, cell: usize) -> Cell<T> {
+        self.lines[line].get(cell)
+    }
+
+    /// Sets the value of a cell.
+    ///
+    /// Flags the grid, if it has been altered.
+    /// See [Grid::flagged].
+    pub fn set(&mut self, line: usize, cell: usize, value: Cell<T>) {
+        self.lines[line].set(cell, value);
+    }
+
+    /// The length of the grid and lines.
+    ///
+    /// Tuple: `(lines, cells)`
+    pub fn len(&self) -> (usize, usize) {
+        let inner = self.lines.first().map(Line::len).unwrap_or(0);
+
+        (self.lines.len(), inner)
+    }
+
+    /// Copies all values to the **intersecting** grid.
+    pub fn write_to(&self, other: &mut Grid<T>) {
+        for line in 0..self.lines.len() {
+            for cell in 0..self.lines[line].len() {
+                other.set(cell, line, self.get(line, cell))
+            }
+        }
     }
 
     /// Finds an unsolved chain.
     ///
     /// Tuple: `(color, line, cell)`
-    pub fn find_unsolved(&self) -> Option<(T, usize, usize)> {
+    pub fn find_unsolved(&self) -> Option<(usize, usize, T)> {
         for line in 0..self.lines.len() {
             match self.lines[line].find_unsolved() {
-                Some((color, cell)) => return Some((color, line, cell)),
+                Some((cell, color)) => return Some((line, cell, color)),
                 None => (),
             }
         }

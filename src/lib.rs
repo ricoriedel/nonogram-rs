@@ -1,4 +1,3 @@
-mod line;
 mod algo;
 mod nonogram;
 mod layout;
@@ -21,7 +20,7 @@ pub enum Error {
 
 /// A trait for an arbitrary cancellation token.
 /// Use `()`, if you don't have any cancellation token.
-pub trait Token {
+pub trait Token: Sync + Send {
     /// Returns [Err] with [Error::Canceled], if the operation has been cancelled.
     fn check(&self) -> Result<(), Error>;
 }

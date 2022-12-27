@@ -1,17 +1,13 @@
-use crate::line::{Col, Row};
 use crate::{Cell, Error, Item, Nonogram, Token};
-use crate::algo::flag::FlagLine;
 use crate::algo::grid::Grid;
 
 pub mod chain;
 pub mod line;
 mod grid;
-mod flag;
 
 /// A branch which might result in a complete nonogram.
 #[derive(Clone)]
 pub struct Branch<T> {
-    nonogram: Nonogram<T>,
     cols: Grid<T>,
     rows: Grid<T>,
 }
@@ -19,14 +15,12 @@ pub struct Branch<T> {
 impl<T: Copy + PartialEq> Branch<T> {
     /// Constructs a new branch from a layout.
     pub fn build(col_grid: &Vec<Vec<Item<T>>>, row_grid: &Vec<Vec<Item<T>>>) -> Self {
-        let nonogram = Nonogram::new(col_grid.len(), row_grid.len());
-        let cols = Grid::build(col_grid, nonogram.rows());
-        let rows = Grid::build(row_grid, nonogram.cols());
+        let cols = Grid::build(col_grid, row_grid.len());
+        let rows = Grid::build(row_grid, col_grid.len());
 
         Self {
             cols,
             rows,
-            nonogram
         }
     }
 
@@ -40,10 +34,10 @@ impl<T: Copy + PartialEq> Branch<T> {
         while let Some(mut branch) = branches.pop() {
             match branch.try_solve(&token) {
                 Ok(_) => {
-                    match branch.find_unsolved() {
-                        None => return Ok(branch.nonogram),
-                        Some((color, col, row)) => {
-                            let (a, b) = branch.fork(color, col, row);
+                    match branch.cols.find_unsolved() {
+                        None => return Ok(branch.build_nonogram()),
+                        Some(unsolved) => {
+                            let (a, b) = branch.fork(unsolved);
 
                             branches.push(a);
                             branches.push(b);
@@ -59,61 +53,41 @@ impl<T: Copy + PartialEq> Branch<T> {
 
     /// Tries to solve a branch without forking.
     fn try_solve(&mut self, token: &impl Token) -> Result<(), Error> {
-        while self.cols.flagged() || self.rows.flagged() {
-            self.try_solve_cols(token)?;
-            self.try_solve_rows(token)?;
-        }
-        Ok(())
-    }
-
-    /// Tries to solve all columns.
-    fn try_solve_cols(&mut self, token: &impl Token) -> Result<(), Error> {
-        for i in 0..self.nonogram.cols() {
-            let line = Col::new(&mut self.nonogram, i);
-            let flag_line = &mut FlagLine::new(line, &mut self.rows);
-
-            self.cols.update(i, flag_line)?;
-
+        while self.cols.flagged() {
+            self.cols.update()?;
+            self.cols.write_to(&mut self.rows);
+            self.rows.update()?;
+            self.rows.write_to(&mut self.cols);
             token.check()?;
         }
         Ok(())
-    }
-
-    /// Tries to solve all rows.
-    fn try_solve_rows(&mut self, token: &impl Token) -> Result<(), Error> {
-        for i in 0..self.nonogram.rows() {
-            let line = Row::new(&mut self.nonogram, i);
-            let flag_line = &mut FlagLine::new(line, &mut self.cols);
-
-            self.rows.update(i, flag_line)?;
-
-            token.check()?;
-        }
-        Ok(())
-    }
-
-    /// Finds and unsolved cell including the only possible color.
-    ///
-    /// Tuple: `(color, line, cell)`
-    fn find_unsolved(&self) -> Option<(T, usize, usize)> {
-        if let Some((color, line, cell)) = self.cols.find_unsolved() {
-            return Some((color, line, cell));
-        }
-        None
     }
 
     /// Forks the branch at the given position
     /// with the given color into one with a box and one with a space.
-    fn fork(mut self, color: T, col: usize, row: usize) -> (Self, Self) {
-        self.cols.flag(col);
-        self.rows.flag(row);
-
+    fn fork(mut self, (col, row, color): (usize, usize, T)) -> (Self, Self) {
         let mut fork = self.clone();
 
-        self.nonogram[(col, row)] = Cell::Box { color };
-        fork.nonogram[(col, row)] = Cell::Space;
+        self.cols.set(col, row, Cell::Box { color });
+        self.rows.set(row, col, Cell::Box { color });
+        fork.cols.set(col, row, Cell::Space);
+        fork.cols.set(row, col, Cell::Space);
 
         (self, fork)
+    }
+
+    /// Builds a new nonogram based on the grid data.
+    fn build_nonogram(&self) -> Nonogram<T> {
+        let (cols, rows) = self.cols.len();
+
+        let mut nonogram = Nonogram::new(cols, rows);
+
+        for col in 0..cols {
+            for row in 0..rows {
+                nonogram[(col, row)] = self.cols.get(col, row);
+            }
+        }
+        nonogram
     }
 }
 

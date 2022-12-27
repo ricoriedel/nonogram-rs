@@ -1,61 +1,71 @@
+use std::ops::Range;
 use crate::algo::chain::Chain;
-use crate::line::Line;
 use crate::{Cell, Error, Item};
 
-/// Metadata about multiple [Chain]s one the same line.
+/// A line of a nonogram including metadata.
 #[derive(Clone, Debug)]
-pub struct Layout<T> {
+pub struct Line<T> {
     data: Vec<Chain<T>>,
+    line: Vec<Cell<T>>,
     flagged: bool,
 }
 
-impl<T: Copy> Layout<T> {
+impl<T: Copy + PartialEq> Line<T> {
     /// Constructs a new layout.
-    pub fn build(numbers: &Vec<Item<T>>, end: usize) -> Self {
+    pub fn build(numbers: &Vec<Item<T>>, len: usize) -> Self {
         let data = numbers.iter()
             .filter(|num| num.len > 0)
-            .map(|c| Chain::new(c.color, c.len, 0, end))
+            .map(|c| Chain::new(c.color, c.len, 0, len))
             .collect();
+        let line = vec![Cell::Empty; len];
 
         Self {
             data,
+            line,
             flagged: true,
         }
     }
 
-    /// Returns whether or not the layout is flagged as dirty.
+    /// Returns whether the layout needs to be updated.
     pub fn flagged(&self) -> bool {
         self.flagged
     }
 
-    /// Clears the [Self::flagged] flag.
-    pub fn clear(&mut self) {
+    /// Updates the metadata and writes changes.
+    pub fn update(&mut self) -> Result<(), Error> {
+        self.update_starts()?;
+        self.update_ends()?;
+        self.write_boxes();
+        self.write_spaces();
         self.flagged = false;
+        Ok(())
     }
 
-    /// Flags the layout as dirty.
-    pub fn flag(&mut self) {
-        self.flagged = true;
-    }
-}
-
-impl<T: Copy + PartialEq> Layout<T> {
-    /// Updates the metadata about the chains based on new clues.
-    pub fn update(&mut self, line: &impl Line<T>) -> Result<(), Error> {
-        self.update_starts(line)?;
-        self.update_ends(line)
+    /// Returns the value of a cell.
+    pub fn get(&self, index: usize) -> Cell<T> {
+        self.line[index]
     }
 
-    /// Writes conclusions from the contained metadata onto a line.
-    pub fn write(&self, line: &mut impl Line<T>) {
-        self.write_boxes(line);
-        self.write_spaces(line);
+    /// Sets the value of a cell.
+    ///
+    /// Flags the line, if it has been altered.
+    /// See [Line::flagged].
+    pub fn set(&mut self, cell: usize, value: Cell<T>) {
+        if self.line[cell] != value {
+            self.line[cell] = value;
+            self.flagged = true;
+        }
+    }
+
+    /// The length of the line.
+    pub fn len(&self) -> usize {
+        self.line.len()
     }
 
     /// Searches an unsolved chain and returns a free cell with the color of the chain.
     ///
-    /// Tuple: `(color, cell)`
-    pub fn find_unsolved(&self) -> Option<(T, usize)> {
+    /// Tuple: `(cell, color)`
+    pub fn find_unsolved(&self) -> Option<(usize, T)> {
         for chain in &self.data {
             if !chain.solved() {
                 // As long as a chain is not solved, the first
@@ -63,21 +73,21 @@ impl<T: Copy + PartialEq> Layout<T> {
                 // Also, it can only be this color as all chains to
                 // the left are solved which means they can't overlap.
 
-                return Some((chain.color(), chain.start()));
+                return Some((chain.start(), chain.color()));
             }
         }
         None
     }
 
     /// Updates the range start of all chains.
-    fn update_starts(&mut self, line: &impl Line<T>) -> Result<(), Error> {
+    fn update_starts(&mut self) -> Result<(), Error> {
         // To avoid an integer overflow at minus one, we iterate with an index offset by plus one.
         let mut position = self.data.len();
 
         while position > 0 {
             let index = position - 1;
-            let (right_start, same_color) = self.check_right(index, line.len());
-            let first_start = self.update_start(index, line, right_start, same_color)?;
+            let (right_start, same_color) = self.check_right(index);
+            let first_start = self.update_start(index, right_start, same_color)?;
 
             if first_start <= right_start {
                 position -= 1;
@@ -91,12 +101,12 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Updates the range end of all chains.
-    fn update_ends(&mut self, line: &impl Line<T>) -> Result<(), Error> {
+    fn update_ends(&mut self) -> Result<(), Error> {
         let mut index = 0;
 
         while index < self.data.len() {
             let (left_end, same_color) = self.check_left(index);
-            let last_end = self.update_end(index, line, left_end, same_color)?;
+            let last_end = self.update_end(index, left_end, same_color)?;
 
             if left_end <= last_end {
                 index += 1;
@@ -111,14 +121,14 @@ impl<T: Copy + PartialEq> Layout<T> {
 
     /// Checks if a chain to the right exists, where it starts and if it has the same color.
     /// If no chain is to the right, the line end is returned as start.
-    fn check_right(&self, index: usize, len: usize) -> (usize, bool) {
+    fn check_right(&self, index: usize) -> (usize, bool) {
         if index + 1 < self.data.len() {
             let this = &self.data[index];
             let right = &self.data[index + 1];
 
             (right.start(), right.color() == this.color())
         } else {
-            (len, false)
+            (self.line.len(), false)
         }
     }
 
@@ -136,42 +146,49 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Updates the start of a single chain.
-    fn update_start(&mut self, index: usize, line: &impl Line<T>, end: usize, same_color: bool) -> Result<usize, Error> {
+    fn update_start(&mut self, index: usize, end: usize, same_color: bool) -> Result<usize, Error> {
         let chain = &mut self.data[index];
-        chain.update_start_by_box_at_end(line, end);
-        chain.update_start_by_adjacent(line)?;
-        chain.update_start_by_gabs(line)?;
+        chain.update_start_by_box_at_end(&self.line, end);
+        chain.update_start_by_adjacent(&self.line)?;
+        chain.update_start_by_gabs(&self.line)?;
 
         Ok(chain.first_start(same_color))
     }
 
     /// Updates the end of a single chain.
-    fn update_end(&mut self, index: usize, line: &impl Line<T>, start: usize, same_color: bool) -> Result<usize, Error> {
+    fn update_end(&mut self, index: usize, start: usize, same_color: bool) -> Result<usize, Error> {
         let chain = &mut self.data[index];
-        chain.update_end_by_box_at_start(line, start);
-        chain.update_end_by_adjacent(line)?;
-        chain.update_end_by_gabs(line)?;
+        chain.update_end_by_box_at_start(&self.line, start);
+        chain.update_end_by_adjacent(&self.line)?;
+        chain.update_end_by_gabs(&self.line)?;
 
         Ok(chain.last_end(same_color))
     }
 
 
     /// Writes all known boxes to the line.
-    fn write_boxes(&self, line: &mut impl Line<T>) {
-        for chain in &self.data {
-            line.fill(chain.known_cells(), Cell::Box { color: chain.color() });
+    fn write_boxes(&mut self) {
+        for chain in 0..self.data.len() {
+            self.fill(self.data[chain].known_cells(), Cell::Box { color: self.data[chain].color() });
         }
     }
 
     /// Writes all known spaces to the line.
-    fn write_spaces(&self, line: &mut impl Line<T>) {
+    fn write_spaces(&mut self) {
         let mut start = 0;
 
-        for chain in &self.data {
-            line.fill(start..chain.start(), Cell::Space);
+        for i in 0..self.data.len() {
+            let chain = self.data[i].clone();
+            self.fill(start..chain.start(), Cell::Space);
             start = chain.end();
         }
-        line.fill(start..line.len(), Cell::Space);
+        self.fill(start..self.line.len(), Cell::Space);
+    }
+
+    fn fill(&mut self, range: Range<usize>, value: Cell<T>) {
+        for i in range {
+            self.line[i] = value;
+        }
     }
 }
 
@@ -183,290 +200,206 @@ mod test {
 
     #[test]
     fn layout_flagged_true_on_creation() {
-        let layout: Layout<()> = Layout::build(&Vec::new(), 0);
-
-        assert!(layout.flagged());
-    }
-
-    #[test]
-    fn layout_clear() {
-        let mut layout: Layout<()> = Layout::build(&Vec::new(), 0);
-
-        layout.clear();
-
-        assert!(!layout.flagged());
-    }
-
-    #[test]
-    fn layout_flag() {
-        let mut layout: Layout<()> = Layout::build(&Vec::new(), 0);
-
-        layout.clear();
-        layout.flag();
+        let layout: Line<()> = Line::build(&Vec::new(), 0);
 
         assert!(layout.flagged());
     }
 
     #[test]
     fn layout_update_different_colors() {
-        let line = &mut vec![
-            Empty,
-            Empty,
-            Empty,
-            Empty,
-            Empty,
-        ];
         let data = vec![
             Item::new('a', 2),
             Item::new('b', 2),
             Item::new('c', 1),
         ];
-        let mut layout = Layout::build(&data, line.len());
-        layout.update(line).unwrap();
-        layout.write(line);
+        let mut line = Line::build(&data, 5);
+        line.update().unwrap();
 
-        assert!(matches!(line[0], Cell::Box { color: 'a' }));
-        assert!(matches!(line[1], Cell::Box { color: 'a' }));
-        assert!(matches!(line[2], Cell::Box { color: 'b' }));
-        assert!(matches!(line[3], Cell::Box { color: 'b' }));
-        assert!(matches!(line[4], Cell::Box { color: 'c' }));
+        assert!(matches!(line.get(0), Cell::Box { color: 'a' }));
+        assert!(matches!(line.get(1), Cell::Box { color: 'a' }));
+        assert!(matches!(line.get(2), Cell::Box { color: 'b' }));
+        assert!(matches!(line.get(3), Cell::Box { color: 'b' }));
+        assert!(matches!(line.get(4), Cell::Box { color: 'c' }));
     }
 
     #[test]
     fn layout_update_same_colors() {
-        let line = &mut vec![
-            Empty,
-            Empty,
-            Empty,
-            Empty,
-            Empty,
-        ];
         let data = vec![
             Item::new('a', 2),
             Item::new('a', 2),
         ];
-        let mut layout = Layout::build(&data, line.len());
-        layout.update(line).unwrap();
-        layout.write(line);
+        let mut line = Line::build(&data, 5);
+        line.update().unwrap();
 
-        assert!(matches!(line[0], Box { color: 'a' }));
-        assert!(matches!(line[1], Box { color: 'a' }));
-        assert!(matches!(line[2], Space));
-        assert!(matches!(line[3], Box { color: 'a' }));
-        assert!(matches!(line[4], Box { color: 'a' }));
+        assert!(matches!(line.get(0), Box { color: 'a' }));
+        assert!(matches!(line.get(1), Box { color: 'a' }));
+        assert!(matches!(line.get(2), Space));
+        assert!(matches!(line.get(3), Box { color: 'a' }));
+        assert!(matches!(line.get(4), Box { color: 'a' }));
     }
 
     #[test]
     fn layout_update_unknown_cells() {
-        let line = &mut vec![
-            Empty,
-            Empty,
-            Empty,
-            Empty,
-            Empty,
-            Empty,
-            Empty,
-        ];
         let data = vec![
             Item::new('a', 3),
             Item::new('a', 2),
         ];
-        let mut layout = Layout::build(&data, line.len());
-        layout.update(line).unwrap();
-        layout.write(line);
+        let mut line = Line::build(&data, 7);
+        line.update().unwrap();
 
-        assert!(matches!(line[0], Empty));
-        assert!(matches!(line[1], Box { color: 'a' }));
-        assert!(matches!(line[2], Box { color: 'a' }));
-        assert!(matches!(line[3], Empty));
-        assert!(matches!(line[4], Empty));
-        assert!(matches!(line[5], Box { color: 'a' }));
-        assert!(matches!(line[6], Empty));
+        assert!(matches!(line.get(0), Empty));
+        assert!(matches!(line.get(1), Box { color: 'a' }));
+        assert!(matches!(line.get(2), Box { color: 'a' }));
+        assert!(matches!(line.get(3), Empty));
+        assert!(matches!(line.get(4), Empty));
+        assert!(matches!(line.get(5), Box { color: 'a' }));
+        assert!(matches!(line.get(6), Empty));
     }
 
     #[test]
     fn layout_update_gab_with_spaces() {
-        let line = &mut vec![
-            Empty,
-            Space,
-            Empty,
-            Empty,
-            Empty,
-            Space,
-            Empty,
-        ];
         let data = vec![
             Item::new('a', 3)
         ];
-        let mut layout = Layout::build(&data, line.len());
-        layout.update(line).unwrap();
-        layout.write(line);
+        let mut line = Line::build(&data, 7);
+        line.set(1, Space);
+        line.set(5, Space);
 
-        assert!(matches!(line[0], Space));
-        assert!(matches!(line[1], Space));
-        assert!(matches!(line[2], Box { color: 'a' }));
-        assert!(matches!(line[3], Box { color: 'a' }));
-        assert!(matches!(line[4], Box { color: 'a' }));
-        assert!(matches!(line[5], Space));
-        assert!(matches!(line[6], Space));
+        line.update().unwrap();
+
+        assert!(matches!(line.get(0), Space));
+        assert!(matches!(line.get(1), Space));
+        assert!(matches!(line.get(2), Box { color: 'a' }));
+        assert!(matches!(line.get(3), Box { color: 'a' }));
+        assert!(matches!(line.get(4), Box { color: 'a' }));
+        assert!(matches!(line.get(5), Space));
+        assert!(matches!(line.get(6), Space));
     }
 
     #[test]
     fn layout_update_gab_with_different_colored_boxes() {
-        let line = &mut vec![
-            Empty,
-            Box { color: 'b' },
-            Box { color: 'a' },
-            Box { color: 'a' },
-            Box { color: 'b' },
-            Empty,
-        ];
         let data = vec![
             Item::new('b', 1),
             Item::new('a', 2),
             Item::new('b', 1),
         ];
-        let mut layout = Layout::build(&data, line.len());
-        layout.update(line).unwrap();
-        layout.write(line);
+        let mut line = Line::build(&data, 6);
+        line.set(1, Box { color: 'b' });
+        line.set(2, Box { color: 'a' });
+        line.set(3, Box { color: 'a' });
+        line.set(4, Box { color: 'b' });
 
-        assert!(matches!(line[0], Space));
-        assert!(matches!(line[1], Box { color: 'b' }));
-        assert!(matches!(line[2], Box { color: 'a' }));
-        assert!(matches!(line[3], Box { color: 'a' }));
-        assert!(matches!(line[4], Box { color: 'b' }));
-        assert!(matches!(line[5], Space));
+        line.update().unwrap();
+
+        assert!(matches!(line.get(0), Space));
+        assert!(matches!(line.get(1), Box { color: 'b' }));
+        assert!(matches!(line.get(2), Box { color: 'a' }));
+        assert!(matches!(line.get(3), Box { color: 'a' }));
+        assert!(matches!(line.get(4), Box { color: 'b' }));
+        assert!(matches!(line.get(5), Space));
     }
 
     #[test]
     fn layout_update_gab_with_spaces_and_same_colored_boxes() {
-        let line = &mut vec![
-            Empty,
-            Box { color: 'a' },
-            Space,
-            Space,
-            Box { color: 'a' },
-            Empty,
-        ];
         let data = vec![
             Item::new('a', 2),
             Item::new('a', 2),
         ];
-        let mut layout = Layout::build(&data, line.len());
-        layout.update(line).unwrap();
-        layout.write(line);
+        let mut line = Line::build(&data, 6);
+        line.set(1, Box { color: 'a' });
+        line.set(2, Space);
+        line.set(3, Space);
+        line.set(4, Box { color: 'a' });
 
-        assert!(matches!(line[0], Box { color: 'a' }));
-        assert!(matches!(line[1], Box { color: 'a' }));
-        assert!(matches!(line[2], Space));
-        assert!(matches!(line[3], Space));
-        assert!(matches!(line[4], Box { color: 'a' }));
-        assert!(matches!(line[5], Box { color: 'a' }));
+        line.update().unwrap();
+
+        assert!(matches!(line.get(0), Box { color: 'a' }));
+        assert!(matches!(line.get(1), Box { color: 'a' }));
+        assert!(matches!(line.get(2), Space));
+        assert!(matches!(line.get(3), Space));
+        assert!(matches!(line.get(4), Box { color: 'a' }));
+        assert!(matches!(line.get(5), Box { color: 'a' }));
     }
 
     #[test]
     fn layout_update_gab_between_different_colored_boxes() {
-        let line = &mut vec![
-            Empty,
-            Box { color: 'a' },
-            Empty,
-            Empty,
-            Box { color: 'a' },
-            Empty,
-        ];
         let data = vec![
             Item::new('a', 1),
             Item::new('b', 2),
             Item::new('a', 1),
         ];
-        let mut layout = Layout::build(&data, line.len());
-        layout.update(line).unwrap();
-        layout.write(line);
+        let mut line = Line::build(&data, 6);
+        line.set(1, Box { color: 'a' });
+        line.set(4, Box { color: 'a' });
 
-        assert!(matches!(line[0], Space));
-        assert!(matches!(line[1], Box { color: 'a' }));
-        assert!(matches!(line[2], Box { color: 'b' }));
-        assert!(matches!(line[3], Box { color: 'b' }));
-        assert!(matches!(line[4], Box { color: 'a' }));
-        assert!(matches!(line[5], Space));
+        line.update().unwrap();
+
+        assert!(matches!(line.get(0), Space));
+        assert!(matches!(line.get(1), Box { color: 'a' }));
+        assert!(matches!(line.get(2), Box { color: 'b' }));
+        assert!(matches!(line.get(3), Box { color: 'b' }));
+        assert!(matches!(line.get(4), Box { color: 'a' }));
+        assert!(matches!(line.get(5), Space));
     }
 
     #[test]
     fn layout_update_box_at_start_and_end() {
-        let line = &mut vec![
-            Box { color: 'a' },
-            Empty,
-            Box { color: 'a' },
-            Empty,
-            Empty,
-            Box { color: 'a' },
-            Empty,
-            Box { color: 'a' },
-        ];
         let data = vec![
             Item::new('a', 1),
             Item::new('a', 1),
             Item::new('a', 1),
             Item::new('a', 1),
         ];
-        let mut layout = Layout::build(&data, line.len());
-        layout.update(line).unwrap();
-        layout.write(line);
+        let mut line = Line::build(&data, 8);
+        line.set(0, Box { color: 'a' });
+        line.set(2, Box { color: 'a' });
+        line.set(5, Box { color: 'a' });
+        line.set(7, Box { color: 'a' });
 
-        assert!(matches!(line[0], Box { color: 'a' }));
-        assert!(matches!(line[1], Space));
-        assert!(matches!(line[2], Box { color: 'a' }));
-        assert!(matches!(line[3], Space));
-        assert!(matches!(line[4], Space));
-        assert!(matches!(line[5], Box { color: 'a' }));
-        assert!(matches!(line[6], Space));
-        assert!(matches!(line[7], Box { color: 'a' }));
+        line.update().unwrap();
+
+        assert!(matches!(line.get(0), Box { color: 'a' }));
+        assert!(matches!(line.get(1), Space));
+        assert!(matches!(line.get(2), Box { color: 'a' }));
+        assert!(matches!(line.get(3), Space));
+        assert!(matches!(line.get(4), Space));
+        assert!(matches!(line.get(5), Box { color: 'a' }));
+        assert!(matches!(line.get(6), Space));
+        assert!(matches!(line.get(7), Box { color: 'a' }));
     }
 
     #[test]
     fn layout_find_unsolved_none() {
-        let line = &mut vec![
-            Box { color: 'a' },
-            Empty,
-            Box { color: 'a' },
-        ];
         let data = vec![
             Item::new('a', 1),
             Item::new('a', 1),
         ];
-        let mut layout = Layout::build(&data, line.len());
-        layout.update(line).unwrap();
+        let mut layout = Line::build(&data, 4);
+        layout.set(0, Box { color: 'a' });
+        layout.set(2, Box { color: 'a' });
+
+        layout.update().unwrap();
 
         assert!(matches!(layout.find_unsolved(), None));
     }
 
     #[test]
     fn layout_find_unsolved_some() {
-        let line = &mut vec![
-            Space,
-            Empty,
-            Empty,
-            Empty,
-            Empty,
-            Box { color: 'b' },
-        ];
         let data = vec![
             Item::new('a', 2),
             Item::new('b', 1),
         ];
-        let mut layout = Layout::build(&data, line.len());
-        layout.update(line).unwrap();
+        let mut layout = Line::build(&data, 6);
+        layout.set(0, Space);
+        layout.set(5, Box { color: 'b' });
 
-        assert!(matches!(layout.find_unsolved(), Some(('a', 1))));
+        layout.update().unwrap();
+
+        assert!(matches!(layout.find_unsolved(), Some((1, 'a'))));
     }
 
     #[test]
     fn layout_new_zeros() {
-        let line = &mut vec![
-            Empty,
-            Empty,
-            Empty,
-        ];
         let data = vec![
             Item::new('a', 1),
             Item::new('a', 0),
@@ -475,8 +408,8 @@ mod test {
             Item::new('a', 0),
             Item::new('a', 1),
         ];
-        let mut layout = Layout::build(&data, line.len());
+        let mut layout = Line::build(&data, 3);
 
-        assert!(layout.update(line).is_ok());
+        assert!(layout.update().is_ok());
     }
 }
