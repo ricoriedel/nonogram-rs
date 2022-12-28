@@ -149,9 +149,9 @@ impl<T: Copy + PartialEq> Line<T> {
     /// Updates the start of a single chain.
     fn update_start(&mut self, index: usize, end: usize, same_color: bool) -> Result<usize, Error> {
         let chain = &mut self.data[index];
-        chain.update_start_by_box_at_end(&self.line, end);
-        chain.update_start_by_adjacent(&self.line)?;
-        chain.update_start_by_gabs(&self.line)?;
+        chain.set_start(chain.start_by_box_at_end(&self.line, end));
+        chain.set_start(chain.start_by_adjacent(&self.line)?);
+        chain.set_start(chain.start_by_gabs(&self.line)?);
 
         Ok(chain.first_start(same_color))
     }
@@ -159,9 +159,9 @@ impl<T: Copy + PartialEq> Line<T> {
     /// Updates the end of a single chain.
     fn update_end(&mut self, index: usize, start: usize, same_color: bool) -> Result<usize, Error> {
         let chain = &mut self.data[index];
-        chain.update_end_by_box_at_start(&self.line, start);
-        chain.update_end_by_adjacent(&self.line)?;
-        chain.update_end_by_gabs(&self.line)?;
+        chain.set_end(chain.end_by_box_at_start(&self.line, start));
+        chain.set_end(chain.end_by_adjacent(&self.line)?);
+        chain.set_end(chain.end_by_gabs(&self.line)?);
 
         Ok(chain.last_end(same_color))
     }

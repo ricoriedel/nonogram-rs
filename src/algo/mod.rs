@@ -16,6 +16,15 @@ pub enum PartCell<T> {
     Space,
 }
 
+impl<T: PartialEq> PartialEq<T> for PartCell<T> {
+    fn eq(&self, other: &T) -> bool {
+        match self {
+            PartCell::Box { color } => color == other,
+            _ => false,
+        }
+    }
+}
+
 impl<T> TryFrom<PartCell<T>> for Cell<T> {
     type Error = ();
 
