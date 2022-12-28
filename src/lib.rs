@@ -1,4 +1,5 @@
 mod algo;
+mod cancel;
 mod nonogram;
 mod layout;
 
@@ -7,6 +8,8 @@ mod serialize;
 
 pub use nonogram::{Cell, Nonogram};
 pub use layout::{Item, Layout};
+pub use cancel::{Token, Cancelled};
+
 use crate::algo::Branch;
 
 /// The reason a nonogram could not be solved.
@@ -16,19 +19,6 @@ pub enum Error {
     Invalid,
     /// The operation has been cancelled.
     Canceled
-}
-
-/// A trait for an arbitrary cancellation token.
-/// Use `()`, if you don't have any cancellation token.
-pub trait Token: Sync + Send {
-    /// Returns [Err] with [Error::Canceled], if the operation has been cancelled.
-    fn check(&self) -> Result<(), Error>;
-}
-
-impl Token for () {
-    fn check(&self) -> Result<(), Error> {
-        Ok(())
-    }
 }
 
 /// Solves a nonogram.
