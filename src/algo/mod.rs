@@ -5,6 +5,29 @@ pub mod chain;
 pub mod line;
 mod grid;
 
+/// A [super::Cell] that might not has a value yet.
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum PartCell<T> {
+    /// An unknown value.
+    Empty,
+    /// A box with some color of type `T`.
+    Box { color: T },
+    /// A space ("x") between chains.
+    Space,
+}
+
+impl<T> TryFrom<PartCell<T>> for Cell<T> {
+    type Error = ();
+
+    fn try_from(value: PartCell<T>) -> Result<Self, Self::Error> {
+        match value {
+            PartCell::Empty => Err(()),
+            PartCell::Box { color } => Ok(Cell::Box { color }),
+            PartCell::Space => Ok(Cell::Space),
+        }
+    }
+}
+
 /// A branch which might result in a complete nonogram.
 #[derive(Clone)]
 pub struct Branch<T> {
@@ -35,7 +58,7 @@ impl<T: Copy + PartialEq> Branch<T> {
             match branch.try_solve(&token) {
                 Ok(_) => {
                     match branch.cols.find_unsolved() {
-                        None => return Ok(branch.cols.into()),
+                        None => return Ok(branch.cols.try_into().unwrap()),
                         Some(unsolved) => {
                             let (a, b) = branch.fork(unsolved);
 
@@ -68,10 +91,10 @@ impl<T: Copy + PartialEq> Branch<T> {
     fn fork(mut self, (col, row, color): (usize, usize, T)) -> (Self, Self) {
         let mut fork = self.clone();
 
-        self.cols.set(col, row, Cell::Box { color });
-        self.rows.set(row, col, Cell::Box { color });
-        fork.cols.set(col, row, Cell::Space);
-        fork.rows.set(row, col, Cell::Space);
+        self.cols.set(col, row, PartCell::Box { color });
+        self.rows.set(row, col, PartCell::Box { color });
+        fork.cols.set(col, row, PartCell::Space);
+        fork.rows.set(row, col, PartCell::Space);
 
         (self, fork)
     }

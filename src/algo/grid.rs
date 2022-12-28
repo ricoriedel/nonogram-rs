@@ -1,5 +1,6 @@
 use crate::algo::line::Line;
-use crate::{Cell, Error, Item, Nonogram};
+use crate::{Error, Item, Nonogram};
+use crate::algo::PartCell;
 
 /// A group of lines including metadata.
 #[derive(Clone)]
@@ -33,7 +34,7 @@ impl<T: Copy + PartialEq> Grid<T> {
     }
 
     /// Returns the value of a cell.
-    pub fn get(&self, line: usize, cell: usize) -> Cell<T> {
+    pub fn get(&self, line: usize, cell: usize) -> PartCell<T> {
         self.lines[line].get(cell)
     }
 
@@ -41,7 +42,7 @@ impl<T: Copy + PartialEq> Grid<T> {
     ///
     /// Flags the grid, if it has been altered.
     /// See [Grid::flagged].
-    pub fn set(&mut self, line: usize, cell: usize, value: Cell<T>) {
+    pub fn set(&mut self, line: usize, cell: usize, value: PartCell<T>) {
         self.lines[line].set(cell, value);
     }
 
@@ -77,17 +78,19 @@ impl<T: Copy + PartialEq> Grid<T> {
     }
 }
 
-impl<T: Copy + PartialEq> From<Grid<T>> for Nonogram<T> {
-    fn from(grid: Grid<T>) -> Self {
+impl<T: Copy + PartialEq> TryFrom<Grid<T>> for Nonogram<T> {
+    type Error = ();
+
+    fn try_from(grid: Grid<T>) -> Result<Self, Self::Error> {
         let (cols, rows) = grid.len();
 
         let mut nonogram = Nonogram::new(cols, rows);
 
         for col in 0..cols {
             for row in 0..rows {
-                nonogram[(col, row)] = grid.get(col, row);
+                nonogram[(col, row)] = grid.get(col, row).try_into()?;
             }
         }
-        nonogram
+        Ok(nonogram)
     }
 }

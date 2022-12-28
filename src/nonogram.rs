@@ -6,8 +6,6 @@ use serde::{Serialize, Deserialize};
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Cell<T> {
-    /// An unknown value.
-    Empty,
     /// A box with some color of type `T`.
     Box { color: T },
     /// A space ("x") between chains.
@@ -40,7 +38,7 @@ impl<T: Clone> Nonogram<T> {
         Self {
             cols,
             rows,
-            data: vec![Cell::Empty; cols * rows],
+            data: vec![Cell::Space; cols * rows],
         }
     }
 }

@@ -1,12 +1,13 @@
 use std::ops::Range;
 use crate::algo::chain::Chain;
-use crate::{Cell, Error, Item};
+use crate::{Error, Item};
+use crate::algo::PartCell;
 
 /// A line of a nonogram including metadata.
 #[derive(Clone, Debug)]
 pub struct Line<T> {
     data: Vec<Chain<T>>,
-    line: Vec<Cell<T>>,
+    line: Vec<PartCell<T>>,
     flagged: bool,
 }
 
@@ -17,7 +18,7 @@ impl<T: Copy + PartialEq> Line<T> {
             .filter(|num| num.len > 0)
             .map(|c| Chain::new(c.color, c.len, 0, len))
             .collect();
-        let line = vec![Cell::Empty; len];
+        let line = vec![PartCell::Empty; len];
 
         Self {
             data,
@@ -42,7 +43,7 @@ impl<T: Copy + PartialEq> Line<T> {
     }
 
     /// Returns the value of a cell.
-    pub fn get(&self, index: usize) -> Cell<T> {
+    pub fn get(&self, index: usize) -> PartCell<T> {
         self.line[index]
     }
 
@@ -50,7 +51,7 @@ impl<T: Copy + PartialEq> Line<T> {
     ///
     /// Flags the line, if it has been altered.
     /// See [Line::flagged].
-    pub fn set(&mut self, cell: usize, value: Cell<T>) {
+    pub fn set(&mut self, cell: usize, value: PartCell<T>) {
         if self.line[cell] != value {
             self.line[cell] = value;
             self.flagged = true;
@@ -169,7 +170,7 @@ impl<T: Copy + PartialEq> Line<T> {
     /// Writes all known boxes to the line.
     fn write_boxes(&mut self) {
         for chain in 0..self.data.len() {
-            self.fill(self.data[chain].known_cells(), Cell::Box { color: self.data[chain].color() });
+            self.fill(self.data[chain].known_cells(), PartCell::Box { color: self.data[chain].color() });
         }
     }
 
@@ -179,13 +180,13 @@ impl<T: Copy + PartialEq> Line<T> {
 
         for i in 0..self.data.len() {
             let chain = self.data[i].clone();
-            self.fill(start..chain.start(), Cell::Space);
+            self.fill(start..chain.start(), PartCell::Space);
             start = chain.end();
         }
-        self.fill(start..self.line.len(), Cell::Space);
+        self.fill(start..self.line.len(), PartCell::Space);
     }
 
-    fn fill(&mut self, range: Range<usize>, value: Cell<T>) {
+    fn fill(&mut self, range: Range<usize>, value: PartCell<T>) {
         for i in range {
             self.line[i] = value;
         }
@@ -195,7 +196,7 @@ impl<T: Copy + PartialEq> Line<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Cell::*;
+    use crate::algo::PartCell::*;
     use crate::Item;
 
     #[test]
@@ -215,11 +216,11 @@ mod test {
         let mut line = Line::build(&data, 5);
         line.update().unwrap();
 
-        assert!(matches!(line.get(0), Cell::Box { color: 'a' }));
-        assert!(matches!(line.get(1), Cell::Box { color: 'a' }));
-        assert!(matches!(line.get(2), Cell::Box { color: 'b' }));
-        assert!(matches!(line.get(3), Cell::Box { color: 'b' }));
-        assert!(matches!(line.get(4), Cell::Box { color: 'c' }));
+        assert!(matches!(line.get(0), PartCell::Box { color: 'a' }));
+        assert!(matches!(line.get(1), PartCell::Box { color: 'a' }));
+        assert!(matches!(line.get(2), PartCell::Box { color: 'b' }));
+        assert!(matches!(line.get(3), PartCell::Box { color: 'b' }));
+        assert!(matches!(line.get(4), PartCell::Box { color: 'c' }));
     }
 
     #[test]

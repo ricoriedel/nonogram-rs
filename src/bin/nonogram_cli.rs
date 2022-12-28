@@ -53,10 +53,6 @@ fn show() -> Result<(), &'static str> {
     for row in 0..nonogram.rows() {
         for col in 0..nonogram.cols() {
             match nonogram[(col, row)] {
-                Cell::Empty => {
-                    stdout().queue(SetForegroundColor(Color::Reset)).unwrap();
-                    stdout().queue(Print("▀▄")).unwrap();
-                }
                 Cell::Box { color } => {
                     let c = map_color(color)?;
 

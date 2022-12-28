@@ -1,7 +1,8 @@
 use std::ops::Range;
-use crate::{Cell, Error};
+use crate::Error;
+use crate::algo::PartCell;
 
-/// Metadata about a chain of [Cell::Box]s.
+/// Metadata about a chain of [PartCell::Box]s.
 #[derive(Clone, Debug)]
 pub struct Chain<T> {
     color: T,
@@ -66,7 +67,7 @@ impl<T: Copy + PartialEq> Chain<T> {
         }
     }
 
-    /// Returns the range of cells which must be filled.
+    /// Returns the range of PartCells which must be filled.
     pub fn known_cells(&self) -> Range<usize> {
         let start = self.end - self.len;
         let end = self.start + self.len;
@@ -81,12 +82,12 @@ impl<T: Copy + PartialEq> Chain<T> {
 
     /// updates the start by pulling it to a box on the right.
     /// Boxes beyond the `end` parameter are ignored.
-    pub fn update_start_by_box_at_end(&mut self, line: &Vec<Cell<T>>, end: usize) {
+    pub fn update_start_by_box_at_end(&mut self, line: &Vec<PartCell<T>>, end: usize) {
         let start = self.start + self.len;
 
         for i in (start..end).rev() {
             match line[i] {
-                Cell::Box { color } if color == self.color => {
+                PartCell::Box { color } if color == self.color => {
                     self.start = i + 1 - self.len;
                     return;
                 }
@@ -96,12 +97,12 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// Mirror of [Chain::update_start_by_box_at_end].
-    pub fn update_end_by_box_at_start(&mut self, line: &Vec<Cell<T>>, start: usize) {
+    pub fn update_end_by_box_at_start(&mut self, line: &Vec<PartCell<T>>, start: usize) {
         let end = self.end - self.len;
 
         for i in start..end {
             match line[i] {
-                Cell::Box { color } if color == self.color => {
+                PartCell::Box { color } if color == self.color => {
                     self.end = i + self.len;
                     return;
                 }
@@ -112,7 +113,7 @@ impl<T: Copy + PartialEq> Chain<T> {
 
     /// updates the start by pushing it past adjacent same colored boxes.
     /// Fails if the range between start and end gets too small to fit the chain.
-    pub fn update_start_by_adjacent(&mut self, line: &Vec<Cell<T>>) -> Result<(), Error> {
+    pub fn update_start_by_adjacent(&mut self, line: &Vec<PartCell<T>>) -> Result<(), Error> {
         if self.start == 0 {
             return Ok(());
         }
@@ -120,7 +121,7 @@ impl<T: Copy + PartialEq> Chain<T> {
 
         for i in self.start..=end {
             match line[i - 1] {
-                Cell::Box { color } if color == self.color => (),
+                PartCell::Box { color } if color == self.color => (),
                 _ => {
                     self.start = i;
                     return Ok(());
@@ -131,7 +132,7 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// Mirror of [Chain::update_start_by_adjacent].
-    pub fn update_end_by_adjacent(&mut self, line: &Vec<Cell<T>>) -> Result<(), Error> {
+    pub fn update_end_by_adjacent(&mut self, line: &Vec<PartCell<T>>) -> Result<(), Error> {
         if self.end == line.len() {
             return Ok(());
         }
@@ -139,7 +140,7 @@ impl<T: Copy + PartialEq> Chain<T> {
 
         for i in (start..=self.end).rev() {
             match line[i] {
-                Cell::Box { color } if color == self.color => (),
+                PartCell::Box { color } if color == self.color => (),
                 _ => {
                     self.end = i;
                     return Ok(());
@@ -151,15 +152,15 @@ impl<T: Copy + PartialEq> Chain<T> {
 
     /// updates the start by moving it past too narrow gabs (between spaces and other colored boxes).
     /// Fails if the range between start and end gets too small to fit the chain.
-    pub fn update_start_by_gabs(&mut self, line: &Vec<Cell<T>>) -> Result<(), Error> {
+    pub fn update_start_by_gabs(&mut self, line: &Vec<PartCell<T>>) -> Result<(), Error> {
         let mut count = 0;
 
         for i in self.start..self.end {
             match line[i] {
-                Cell::Space => {
+                PartCell::Space => {
                     count = 0;
                 }
-                Cell::Box { color } if color != self.color => {
+                PartCell::Box { color } if color != self.color => {
                     count = 0;
                 }
                 _ => {
@@ -176,15 +177,15 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// Mirror of [Chain::update_start_by_gabs].
-    pub fn update_end_by_gabs(&mut self, line: &Vec<Cell<T>>) -> Result<(), Error> {
+    pub fn update_end_by_gabs(&mut self, line: &Vec<PartCell<T>>) -> Result<(), Error> {
         let mut count = 0;
 
         for i in (self.start..self.end).rev() {
             match line[i] {
-                Cell::Space => {
+                PartCell::Space => {
                     count = 0;
                 }
-                Cell::Box { color } if color != self.color => {
+                PartCell::Box { color } if color != self.color => {
                     count = 0;
                 }
                 _ => {
@@ -204,7 +205,7 @@ impl<T: Copy + PartialEq> Chain<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Cell::*;
+    use crate::algo::PartCell::*;
 
     #[test]
     fn chain_new() {
