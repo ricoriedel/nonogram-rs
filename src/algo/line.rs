@@ -67,17 +67,10 @@ impl<T: Copy + PartialEq> Line<T> {
     ///
     /// Tuple: `(cell, color)`
     pub fn find_unsolved(&self) -> Option<(usize, T)> {
-        for chain in &self.data {
-            if !chain.solved() {
-                // As long as a chain is not solved, the first
-                // and last box inside the range must be empty.
-                // Also, it can only be this color as all chains to
-                // the left are solved which means they can't overlap.
-
-                return Some((chain.start(), chain.color()));
-            }
-        }
-        None
+        self.data.iter()
+            .filter(|c| !c.solved())
+            .map(|chain| (chain.start(), chain.color()))
+            .next()
     }
 
     /// Updates the range start of all chains.

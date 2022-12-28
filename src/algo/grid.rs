@@ -50,7 +50,9 @@ impl<T: Copy + PartialEq> Grid<T> {
     ///
     /// Tuple: `(lines, cells)`
     pub fn len(&self) -> (usize, usize) {
-        let inner = self.lines.first().map(Line::len).unwrap_or(0);
+        let inner = self.lines.first()
+            .map(Line::len)
+            .unwrap_or(0);
 
         (self.lines.len(), inner)
     }
@@ -68,13 +70,12 @@ impl<T: Copy + PartialEq> Grid<T> {
     ///
     /// Tuple: `(color, line, cell)`
     pub fn find_unsolved(&self) -> Option<(usize, usize, T)> {
-        for line in 0..self.lines.len() {
-            match self.lines[line].find_unsolved() {
-                Some((cell, color)) => return Some((line, cell, color)),
-                None => (),
-            }
-        }
-        None
+        self.lines.iter()
+            .enumerate()
+            .filter_map(|(line, data)|
+                data.find_unsolved()
+                    .map(|(cell, color)| (line, cell, color)))
+            .next()
     }
 }
 
