@@ -80,15 +80,18 @@ impl<T: Copy + PartialEq> Line<T> {
 
         while position > 0 {
             let index = position - 1;
-            let (right_start, same_color) = self.check_right(index);
-            let first_start = self.update_start(index, right_start, same_color)?;
 
-            if first_start <= right_start {
-                position -= 1;
-            } else {
-                self.data[position].set_start(first_start);
+            let (prev_start, same_color) = self.check_right(index);
+            let border = self.update_start(index, prev_start, same_color)?;
+
+            if prev_start < border {
+                // Backtrack
+
+                self.data[position].set_start(border);
 
                 position += 1;
+            } else {
+                position -= 1;
             }
         }
         Ok(())
@@ -99,15 +102,17 @@ impl<T: Copy + PartialEq> Line<T> {
         let mut index = 0;
 
         while index < self.data.len() {
-            let (left_end, same_color) = self.check_left(index);
-            let last_end = self.update_end(index, left_end, same_color)?;
+            let (prev_end, same_color) = self.check_left(index);
+            let border = self.update_end(index, prev_end, same_color)?;
 
-            if left_end <= last_end {
-                index += 1;
-            } else {
+            if prev_end > border {
+                // Backtrack
+
                 index -= 1;
 
-                self.data[index].set_end(last_end);
+                self.data[index].set_end(border);
+            } else {
+                index += 1;
             }
         }
         Ok(())
@@ -146,7 +151,7 @@ impl<T: Copy + PartialEq> Line<T> {
         chain.set_start(chain.start_by_adjacent(&self.line)?);
         chain.set_start(chain.start_by_gabs(&self.line)?);
 
-        Ok(chain.first_start(same_color))
+        Ok(chain.prev_start_border(same_color))
     }
 
     /// Updates the end of a single chain.
@@ -156,7 +161,7 @@ impl<T: Copy + PartialEq> Line<T> {
         chain.set_end(chain.end_by_adjacent(&self.line)?);
         chain.set_end(chain.end_by_gabs(&self.line)?);
 
-        Ok(chain.last_end(same_color))
+        Ok(chain.prev_end_border(same_color))
     }
 
 

@@ -49,8 +49,8 @@ impl<T: Copy + PartialEq> Chain<T> {
         self.end = end;
     }
 
-    /// Get the first *possible* start of the chain to the right.
-    pub fn first_start(&self, same_color: bool) -> usize {
+    /// The smallest start value of the previous chain before we need to backtrack.
+    pub fn prev_start_border(&self, same_color: bool) -> usize {
         if same_color {
             self.start + self.len + 1
         } else {
@@ -58,8 +58,8 @@ impl<T: Copy + PartialEq> Chain<T> {
         }
     }
 
-    /// Get the last *possible* end of the chain to the left.
-    pub fn last_end(&self, same_color: bool) -> usize {
+    /// The highest end value of the previous chain before we need to backtrack.
+    pub fn prev_end_border(&self, same_color: bool) -> usize {
         if same_color {
             self.end - self.len - 1
         } else {
@@ -215,31 +215,31 @@ mod test {
     }
 
     #[test]
-    fn chain_first_start_same_color_false() {
+    fn chain_prev_start_border_same_color_false() {
         let c = Chain::new(0, 2, 3, 0);
 
-        assert_eq!(5, c.first_start(false));
+        assert_eq!(5, c.prev_start_border(false));
     }
 
     #[test]
-    fn chain_first_start_same_color_true() {
+    fn chain_prev_start_border_same_color_true() {
         let c = Chain::new(0, 2, 3, 0);
 
-        assert_eq!(6, c.first_start(true));
+        assert_eq!(6, c.prev_start_border(true));
     }
 
     #[test]
-    fn chain_last_end_same_color_false() {
+    fn chain_prev_end_border_same_color_false() {
         let c = Chain::new(0, 2, 0, 7);
 
-        assert_eq!(5, c.last_end(false));
+        assert_eq!(5, c.prev_end_border(false));
     }
 
     #[test]
-    fn chain_last_end_same_color_true() {
+    fn chain_prev_end_border_same_color_true() {
         let c = Chain::new(0, 4, 0, 8);
 
-        assert_eq!(3, c.last_end(true));
+        assert_eq!(3, c.prev_end_border(true));
     }
 
     #[test]
