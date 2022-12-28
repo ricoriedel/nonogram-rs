@@ -317,6 +317,14 @@ mod test {
     }
 
     #[test]
+    fn chain_start_by_box_at_end_empty_range() {
+        let line = vec![Space, Empty, Space, Empty, Space];
+        let c = Chain::new(7, 3, 0, 4);
+
+        assert_eq!(0, c.start_by_box_at_end(&line, 3));
+    }
+
+    #[test]
     fn chain_end_by_box_at_start_none() {
         let line = vec![Space, Empty, Space, Empty];
         let c = Chain::new(7, 2, 0, line.len());
@@ -377,6 +385,14 @@ mod test {
         let c = Chain::new(7, 3, 0, line.len());
 
         assert_eq!(5, c.end_by_box_at_start(&line, 0));
+    }
+
+    #[test]
+    fn chain_end_by_box_at_start_box_empty_range() {
+        let line = vec![Space, Empty, Space, Empty, Space];
+        let c = Chain::new(7, 3, 0, line.len());
+
+        assert_eq!(5, c.end_by_box_at_start(&line, 2));
     }
 
     #[test]

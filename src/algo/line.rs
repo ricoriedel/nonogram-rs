@@ -12,7 +12,7 @@ pub struct Line<T> {
 }
 
 impl<T: Copy + PartialEq> Line<T> {
-    /// Constructs a new layout.
+    /// Constructs a new line.
     pub fn build(numbers: &Vec<Item<T>>, len: usize) -> Self {
         let data = numbers.iter()
             .filter(|num| num.len > 0)
@@ -27,7 +27,7 @@ impl<T: Copy + PartialEq> Line<T> {
         }
     }
 
-    /// Returns whether the layout needs to be updated.
+    /// Returns whether the line needs to be updated.
     pub fn flagged(&self) -> bool {
         self.flagged
     }
@@ -198,14 +198,19 @@ mod test {
     use crate::Item;
 
     #[test]
-    fn layout_flagged_true_on_creation() {
-        let layout: Line<()> = Line::build(&Vec::new(), 0);
+    fn line_flagged_true_on_creation() {
+        let line: Line<()> = Line::build(&Vec::new(), 0);
 
-        assert!(layout.flagged());
+        assert!(line.flagged());
     }
 
     #[test]
-    fn layout_update_different_colors() {
+    fn line_len() {
+        assert!(5, Line::build(&Vec::new(), 5).len());
+    }
+
+    #[test]
+    fn line_update_different_colors() {
         let data = vec![
             Item::new('a', 2),
             Item::new('b', 2),
@@ -222,7 +227,7 @@ mod test {
     }
 
     #[test]
-    fn layout_update_same_colors() {
+    fn line_update_same_colors() {
         let data = vec![
             Item::new('a', 2),
             Item::new('a', 2),
@@ -238,7 +243,7 @@ mod test {
     }
 
     #[test]
-    fn layout_update_unknown_cells() {
+    fn line_update_unknown_cells() {
         let data = vec![
             Item::new('a', 3),
             Item::new('a', 2),
@@ -256,7 +261,7 @@ mod test {
     }
 
     #[test]
-    fn layout_update_gab_with_spaces() {
+    fn line_update_gab_with_spaces() {
         let data = vec![
             Item::new('a', 3)
         ];
@@ -276,7 +281,7 @@ mod test {
     }
 
     #[test]
-    fn layout_update_gab_with_different_colored_boxes() {
+    fn line_update_gab_with_different_colored_boxes() {
         let data = vec![
             Item::new('b', 1),
             Item::new('a', 2),
@@ -299,7 +304,7 @@ mod test {
     }
 
     #[test]
-    fn layout_update_gab_with_spaces_and_same_colored_boxes() {
+    fn line_update_gab_with_spaces_and_same_colored_boxes() {
         let data = vec![
             Item::new('a', 2),
             Item::new('a', 2),
@@ -321,7 +326,7 @@ mod test {
     }
 
     #[test]
-    fn layout_update_gab_between_different_colored_boxes() {
+    fn line_update_gab_between_different_colored_boxes() {
         let data = vec![
             Item::new('a', 1),
             Item::new('b', 2),
@@ -342,7 +347,7 @@ mod test {
     }
 
     #[test]
-    fn layout_update_box_at_start_and_end() {
+    fn line_update_box_at_start_and_end() {
         let data = vec![
             Item::new('a', 1),
             Item::new('a', 1),
@@ -368,37 +373,37 @@ mod test {
     }
 
     #[test]
-    fn layout_find_unsolved_none() {
+    fn line_find_unsolved_none() {
         let data = vec![
             Item::new('a', 1),
             Item::new('a', 1),
         ];
-        let mut layout = Line::build(&data, 4);
-        layout.set(0, Box { color: 'a' });
-        layout.set(2, Box { color: 'a' });
+        let mut line = Line::build(&data, 4);
+        line.set(0, Box { color: 'a' });
+        line.set(2, Box { color: 'a' });
 
-        layout.update().unwrap();
+        line.update().unwrap();
 
-        assert!(matches!(layout.find_unsolved(), None));
+        assert!(matches!(line.find_unsolved(), None));
     }
 
     #[test]
-    fn layout_find_unsolved_some() {
+    fn line_find_unsolved_some() {
         let data = vec![
             Item::new('a', 2),
             Item::new('b', 1),
         ];
-        let mut layout = Line::build(&data, 6);
-        layout.set(0, Space);
-        layout.set(5, Box { color: 'b' });
+        let mut line = Line::build(&data, 6);
+        line.set(0, Space);
+        line.set(5, Box { color: 'b' });
 
-        layout.update().unwrap();
+        line.update().unwrap();
 
-        assert!(matches!(layout.find_unsolved(), Some((1, 'a'))));
+        assert!(matches!(line.find_unsolved(), Some((1, 'a'))));
     }
 
     #[test]
-    fn layout_new_zeros() {
+    fn line_new_zeros() {
         let data = vec![
             Item::new('a', 1),
             Item::new('a', 0),
@@ -407,8 +412,8 @@ mod test {
             Item::new('a', 0),
             Item::new('a', 1),
         ];
-        let mut layout = Line::build(&data, 3);
+        let mut line = Line::build(&data, 3);
 
-        assert!(layout.update().is_ok());
+        assert!(line.update().is_ok());
     }
 }
