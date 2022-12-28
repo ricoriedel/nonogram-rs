@@ -35,7 +35,7 @@ impl<T: Copy + PartialEq> Branch<T> {
             match branch.try_solve(&token) {
                 Ok(_) => {
                     match branch.cols.find_unsolved() {
-                        None => return Ok(branch.build_nonogram()),
+                        None => return Ok(branch.cols.into()),
                         Some(unsolved) => {
                             let (a, b) = branch.fork(unsolved);
 
@@ -74,20 +74,6 @@ impl<T: Copy + PartialEq> Branch<T> {
         fork.rows.set(row, col, Cell::Space);
 
         (self, fork)
-    }
-
-    /// Builds a new nonogram based on the grid data.
-    fn build_nonogram(&self) -> Nonogram<T> {
-        let (cols, rows) = self.cols.len();
-
-        let mut nonogram = Nonogram::new(cols, rows);
-
-        for col in 0..cols {
-            for row in 0..rows {
-                nonogram[(col, row)] = self.cols.get(col, row);
-            }
-        }
-        nonogram
     }
 }
 

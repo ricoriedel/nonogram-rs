@@ -1,5 +1,5 @@
 use crate::algo::line::Line;
-use crate::{Cell, Error, Item};
+use crate::{Cell, Error, Item, Nonogram};
 
 /// A group of lines including metadata.
 #[derive(Clone)]
@@ -74,5 +74,20 @@ impl<T: Copy + PartialEq> Grid<T> {
             }
         }
         None
+    }
+}
+
+impl<T: Copy + PartialEq> From<Grid<T>> for Nonogram<T> {
+    fn from(grid: Grid<T>) -> Self {
+        let (cols, rows) = grid.len();
+
+        let mut nonogram = Nonogram::new(cols, rows);
+
+        for col in 0..cols {
+            for row in 0..rows {
+                nonogram[(col, row)] = grid.get(col, row);
+            }
+        }
+        nonogram
     }
 }
