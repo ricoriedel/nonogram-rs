@@ -64,18 +64,18 @@ impl<T: Copy + PartialEq> Chain<T> {
 
     /// Updates the start of a the chain.
     pub fn update_start(&mut self, line: &Vec<PartCell<T>>, end: usize, same_color: bool) -> Result<usize, Error> {
-        self.set_start(self.start_by_box_at_end(line, end));
-        self.set_start(self.start_by_adjacent(line)?);
-        self.set_start(self.start_by_gabs(line)?);
+        self.update_start_by_box_at_end(line, end);
+        self.update_start_by_adjacent(line)?;
+        self.update_start_by_gabs(line)?;
 
         Ok(self.prev_start_border(same_color))
     }
 
     /// Updates the end of a the chain.
     pub fn update_end(&mut self, line: &Vec<PartCell<T>>, start: usize, same_color: bool) -> Result<usize, Error> {
-        self.set_end(self.end_by_box_at_start(line, start));
-        self.set_end(self.end_by_adjacent(line)?);
-        self.set_end(self.end_by_gabs(line)?);
+        self.update_end_by_box_at_start(line, start);
+        self.update_end_by_adjacent(line)?;
+        self.update_end_by_gabs(line)?;
 
         Ok(self.prev_end_border(same_color))
     }
@@ -100,73 +100,75 @@ impl<T: Copy + PartialEq> Chain<T> {
 
     /// Finds a more precise start by looking at boxes on the right.
     /// Boxes beyond the `end` parameter are ignored.
-    fn start_by_box_at_end(&self, line: &Vec<PartCell<T>>, end: usize) -> usize {
+    fn update_start_by_box_at_end(&mut self, line: &Vec<PartCell<T>>, end: usize) {
         let start = self.start + self.len;
 
         if start >= end {
-            return self.start;
+            return;
         }
-        line[start..end].iter()
+        self.start = line[start..end].iter()
             .rev()
             .enumerate()
             .filter(|(_, value)| **value == self.color)
             .next()
             .map(|(i, _)| end - i - self.len)
-            .unwrap_or(self.start)
+            .unwrap_or(self.start);
     }
 
     /// Mirror of [Chain::start_by_box_at_end].
-    fn end_by_box_at_start(&self, line: &Vec<PartCell<T>>, start: usize) -> usize {
+    fn update_end_by_box_at_start(&mut self, line: &Vec<PartCell<T>>, start: usize) {
         let end = self.end - self.len;
 
         if start >= end {
-            return self.end;
+            return;
         }
-        line[start..end].iter()
+        self.end = line[start..end].iter()
             .enumerate()
             .filter(|(_, value)| **value == self.color)
             .next()
             .map(|(i, _)| start + i + self.len)
-            .unwrap_or(self.end)
+            .unwrap_or(self.end);
     }
 
     /// Finds a more precise start by looking at adjacent same colored boxes.
     /// Fails if the range between start and end gets too small to fit the chain.
-    fn start_by_adjacent(&self, line: &Vec<PartCell<T>>) -> Result<usize, Error> {
+    fn update_start_by_adjacent(&mut self, line: &Vec<PartCell<T>>) -> Result<(), Error> {
         if self.start == 0 {
-            return Ok(self.start);
+            return Ok(());
         }
         let neighbour = self.start - 1;
         let end = self.end - self.len;
 
-        line[neighbour..end].iter()
+        self.start = line[neighbour..end].iter()
             .enumerate()
             .filter(|(_, value)| **value != self.color)
             .next()
             .map(|(shift, _)| Ok(self.start + shift))
-            .unwrap_or(Err(Error::Invalid))
+            .unwrap_or(Err(Error::Invalid))?;
+        Ok(())
     }
 
     /// Mirror of [Chain::start_by_adjacent].
-    fn end_by_adjacent(&self, line: &Vec<PartCell<T>>) -> Result<usize, Error> {
+    fn update_end_by_adjacent(&mut self, line: &Vec<PartCell<T>>) -> Result<(), Error> {
         if self.end == line.len() {
-            return Ok(self.end);
+            return Ok(());
         }
         let start = self.start + self.len;
         let neighbour = self.end + 1;
 
-        line[start..neighbour].iter()
+        self.end = line[start..neighbour].iter()
             .rev()
             .enumerate()
             .filter(|(_, value)| **value != self.color)
             .next()
             .map(|(shift, _)| Ok(self.end - shift))
-            .unwrap_or(Err(Error::Invalid))
+            .unwrap_or(Err(Error::Invalid))?;
+        Ok(())
     }
 
     /// Finds a more precise start by looking for a gab between spaces and other colored boxes.
     /// Fails if the range between start and end gets too small to fit the chain.
-    fn start_by_gabs(&self, line: &Vec<PartCell<T>>) -> Result<usize, Error> {
+    fn update_start_by_gabs(&mut self, line: &Vec<PartCell<T>>) -> Result<(), Error> {
         let mut count = 0;
 
         for i in self.start..self.end {
@@ -176,14 +178,15 @@ impl<T: Copy + PartialEq> Chain<T> {
                 _ => count + 1
             };
             if count == self.len {
-                return Ok(i + 1 - self.len);
+                self.start = i + 1 - self.len;
+                return Ok(());
             }
         }
         Err(Error::Invalid)
     }
 
-    /// Mirror of [Chain::start_by_gabs].
-    fn end_by_gabs(&self, line: &Vec<PartCell<T>>) -> Result<usize, Error> {
+    /// Mirror of [Chain::update_start_by_gabs].
+    fn update_end_by_gabs(&mut self, line: &Vec<PartCell<T>>) -> Result<(), Error> {
         let mut count = 0;
 
         for i in (self.start..self.end).rev() {
@@ -193,7 +196,8 @@ impl<T: Copy + PartialEq> Chain<T> {
                 _ => count + 1
             };
             if count == self.len {
-                return Ok(i + self.len);
+                self.end = i + self.len;
+                return Ok(());
             }
         }
         Err(Error::Invalid)
@@ -272,31 +276,37 @@ mod test {
     }
 
     #[test]
-    fn chain_start_by_box_at_end_none() {
+    fn chain_update_start_by_box_at_end_none() {
         let line = vec![Space, Empty, Space, Empty];
-        let c = Chain::new(7, 2, 0, line.len());
+        let mut c = Chain::new(7, 2, 0, line.len());
 
-        assert_eq!(0, c.start_by_box_at_end(&line, line.len()));
+        c.update_start_by_box_at_end(&line, line.len());
+
+        assert_eq!(0, c.start());
     }
 
     #[test]
-    fn chain_start_by_box_at_end_one_box() {
+    fn chain_update_start_by_box_at_end_one_box() {
         let line = vec![Space, Empty, Space, Empty, Box { color: 7 }, Empty];
-        let c = Chain::new(7, 3, 0, line.len());
+        let mut c = Chain::new(7, 3, 0, line.len());
 
-        assert_eq!(2, c.start_by_box_at_end(&line, line.len()));
+        c.update_start_by_box_at_end(&line, line.len());
+        
+        assert_eq!(2, c.start());
     }
 
     #[test]
-    fn chain_start_by_box_at_end_box_beyond_end() {
+    fn chain_update_start_by_box_at_end_box_beyond_end() {
         let line = vec![Space, Empty, Space, Empty, Box { color: 7 }, Empty];
-        let c = Chain::new(7, 3, 0, line.len());
+        let mut c = Chain::new(7, 3, 0, line.len());
 
-        assert_eq!(0, c.start_by_box_at_end(&line, 4));
+        c.update_start_by_box_at_end(&line, 4);
+        
+        assert_eq!(0, c.start());
     }
 
     #[test]
-    fn chain_start_by_box_at_end_false_color() {
+    fn chain_update_start_by_box_at_end_false_color() {
         let line = vec![
             Space,
             Empty,
@@ -305,13 +315,15 @@ mod test {
             Box { color: 7 },
             Box { color: 8 },
         ];
-        let c = Chain::new(1, 3, 0, line.len());
+        let mut c = Chain::new(1, 3, 0, line.len());
 
-        assert_eq!(1, c.start_by_box_at_end(&line, line.len()));
+        c.update_start_by_box_at_end(&line, line.len());
+        
+        assert_eq!(1, c.start());
     }
 
     #[test]
-    fn chain_start_by_box_at_end_multiple_boxes() {
+    fn chain_update_start_by_box_at_end_multiple_boxes() {
         let line = vec![
             Space,
             Empty,
@@ -321,53 +333,65 @@ mod test {
             Box { color: 7 },
             Space,
         ];
-        let c = Chain::new(7, 2, 0, line.len());
+        let mut c = Chain::new(7, 2, 0, line.len());
 
-        assert_eq!(4, c.start_by_box_at_end(&line, line.len()));
+        c.update_start_by_box_at_end(&line, line.len());
+        
+        assert_eq!(4, c.start());
     }
 
     #[test]
-    fn chain_start_by_box_at_end_box_at_start() {
+    fn chain_update_start_by_box_at_end_box_at_start() {
         let line = vec![Space, Box { color: 7 }, Space, Empty, Space];
-        let c = Chain::new(7, 3, 0, line.len());
+        let mut c = Chain::new(7, 3, 0, line.len());
 
-        assert_eq!(0, c.start_by_box_at_end(&line, line.len()));
+        c.update_start_by_box_at_end(&line, line.len());
+        
+        assert_eq!(0, c.start());
     }
 
     #[test]
-    fn chain_start_by_box_at_end_empty_range() {
+    fn chain_update_start_by_box_at_end_empty_range() {
         let line = vec![Space, Empty, Space, Empty, Space];
-        let c = Chain::new(7, 3, 0, 4);
+        let mut c = Chain::new(7, 3, 0, 4);
 
-        assert_eq!(0, c.start_by_box_at_end(&line, 3));
+        c.update_start_by_box_at_end(&line, 3);
+        
+        assert_eq!(0, c.start());
     }
 
     #[test]
-    fn chain_end_by_box_at_start_none() {
+    fn chain_update_end_by_box_at_start_none() {
         let line = vec![Space, Empty, Space, Empty];
-        let c = Chain::new(7, 2, 0, line.len());
+        let mut c = Chain::new(7, 2, 0, line.len());
 
-        assert_eq!(4, c.end_by_box_at_start(&line, 0));
+        c.update_end_by_box_at_start(&line, 0);
+        
+        assert_eq!(4, c.end());
     }
 
     #[test]
-    fn chain_end_by_box_at_start_one_box() {
+    fn chain_update_end_by_box_at_start_one_box() {
         let line = vec![Space, Box { color: 7 }, Space, Empty, Space, Empty];
-        let c = Chain::new(7, 3, 0, line.len());
+        let mut c = Chain::new(7, 3, 0, line.len());
 
-        assert_eq!(4, c.end_by_box_at_start(&line, 0));
+        c.update_end_by_box_at_start(&line, 0);
+        
+        assert_eq!(4, c.end());
     }
 
     #[test]
-    fn chain_end_by_box_at_start_box_beyond_end() {
+    fn chain_update_end_by_box_at_start_box_beyond_end() {
         let line = vec![Space, Box { color: 7 }, Space, Empty, Space, Empty];
-        let c = Chain::new(7, 3, 0, line.len());
+        let mut c = Chain::new(7, 3, 0, line.len());
 
-        assert_eq!(6, c.end_by_box_at_start(&line, 2));
+        c.update_end_by_box_at_start(&line, 2);
+        
+        assert_eq!(6, c.end());
     }
 
     #[test]
-    fn chain_end_by_box_at_start_false_color() {
+    fn chain_update_end_by_box_at_start_false_color() {
         let line = vec![
             Box { color: 8 },
             Box { color: 7 },
@@ -376,13 +400,15 @@ mod test {
             Empty,
             Space,
         ];
-        let c = Chain::new(1, 3, 0, line.len());
+        let mut c = Chain::new(1, 3, 0, line.len());
 
-        assert_eq!(5, c.end_by_box_at_start(&line, 0));
+        c.update_end_by_box_at_start(&line, 0);
+        
+        assert_eq!(5, c.end());
     }
 
     #[test]
-    fn chain_end_by_box_at_start_multiple_boxes() {
+    fn chain_update_end_by_box_at_start_multiple_boxes() {
         let line = vec![
             Space,
             Box { color: 7 },
@@ -392,125 +418,151 @@ mod test {
             Empty,
             Space,
         ];
-        let c = Chain::new(7, 2, 0, line.len());
+        let mut c = Chain::new(7, 2, 0, line.len());
 
-        assert_eq!(3, c.end_by_box_at_start(&line, 0));
+        c.update_end_by_box_at_start(&line, 0);
+
+        assert_eq!(3, c.end());
     }
 
     #[test]
-    fn chain_end_by_box_at_start_box_at_start() {
+    fn chain_update_end_by_box_at_start_box_at_start() {
         let line = vec![Space, Empty, Space, Box { color: 7 }, Space];
-        let c = Chain::new(7, 3, 0, line.len());
+        let mut c = Chain::new(7, 3, 0, line.len());
 
-        assert_eq!(5, c.end_by_box_at_start(&line, 0));
+        c.update_end_by_box_at_start(&line, 0);
+
+        assert_eq!(5, c.end());
     }
 
     #[test]
-    fn chain_end_by_box_at_start_box_empty_range() {
+    fn chain_update_end_by_box_at_start_box_empty_range() {
         let line = vec![Space, Empty, Space, Empty, Space];
-        let c = Chain::new(7, 3, 0, line.len());
+        let mut c = Chain::new(7, 3, 0, line.len());
 
-        assert_eq!(5, c.end_by_box_at_start(&line, 2));
+        c.update_end_by_box_at_start(&line, 2);
+
+        assert_eq!(5, c.end());
     }
 
     #[test]
-    fn chain_start_by_adjacent_fully_at_left() {
+    fn chain_update_start_by_adjacent_fully_at_left() {
         let line = vec![Box { color: 4 }, Box { color: 4 }, Empty, Empty];
-        let c = Chain::new(4, 2, 0, line.len());
+        let mut c = Chain::new(4, 2, 0, line.len());
 
-        assert_eq!(0, c.start_by_adjacent(&line).unwrap());
+        c.update_start_by_adjacent(&line).unwrap();
+
+        assert_eq!(0, c.start());
     }
 
     #[test]
-    fn chain_start_by_adjacent_none() {
+    fn chain_update_start_by_adjacent_none() {
         let line = vec![Empty, Empty, Empty, Empty, Empty];
-        let c = Chain::new(4, 2, 2, line.len());
+        let mut c = Chain::new(4, 2, 2, line.len());
 
-        assert_eq!(2, c.start_by_adjacent(&line).unwrap());
+        c.update_start_by_adjacent(&line).unwrap();
+
+        assert_eq!(2, c.start());
     }
 
     #[test]
-    fn chain_start_by_adjacent_some_boxes() {
+    fn chain_update_start_by_adjacent_some_boxes() {
         let line = vec![Box { color: 4 }, Box { color: 4 }, Empty, Empty, Empty];
-        let c = Chain::new(4, 2, 1, line.len());
+        let mut c = Chain::new(4, 2, 1, line.len());
 
-        assert_eq!(3, c.start_by_adjacent(&line).unwrap());
+        c.update_start_by_adjacent(&line).unwrap();
+
+        assert_eq!(3, c.start());
     }
 
     #[test]
-    fn chain_start_by_adjacent_some_different_colored_boxes() {
+    fn chain_update_start_by_adjacent_some_different_colored_boxes() {
         let line = vec![Box { color: 2 }, Box { color: 1 }, Empty, Empty];
-        let c = Chain::new(4, 2, 1, line.len());
+        let mut c = Chain::new(4, 2, 1, line.len());
 
-        assert_eq!(1, c.start_by_adjacent(&line).unwrap());
+        c.update_start_by_adjacent(&line).unwrap();
+
+        assert_eq!(1, c.start());
     }
 
     #[test]
-    fn chain_start_by_adjacent_some_spaces() {
+    fn chain_update_start_by_adjacent_some_spaces() {
         let line = vec![Space, Space, Empty, Empty];
-        let c = Chain::new(4, 2, 1, line.len());
+        let mut c = Chain::new(4, 2, 1, line.len());
 
-        assert_eq!(1, c.start_by_adjacent(&line).unwrap());
+        c.update_start_by_adjacent(&line).unwrap();
+
+        assert_eq!(1, c.start());
     }
 
     #[test]
-    fn chain_start_by_adjacent_boxes_err() {
+    fn chain_update_start_by_adjacent_boxes_err() {
         let line = vec![Box { color: 4 }, Box { color: 4 }, Empty, Empty];
-        let c = Chain::new(4, 2, 1, line.len());
+        let mut c = Chain::new(4, 2, 1, line.len());
 
-        assert!(c.start_by_adjacent(&line).is_err());
+        assert!(c.update_start_by_adjacent(&line).is_err());
     }
 
     #[test]
-    fn chain_start_by_adjacent_boxes_err_by_end() {
+    fn chain_update_start_by_adjacent_boxes_err_by_end() {
         let line = vec![Box { color: 4 }, Box { color: 4 }, Empty, Empty, Empty];
-        let c = Chain::new(4, 2, 1, 4);
+        let mut c = Chain::new(4, 2, 1, 4);
 
-        assert!(c.start_by_adjacent(&line).is_err());
+        assert!(c.update_start_by_adjacent(&line).is_err());
     }
 
     #[test]
-    fn chain_end_by_adjacent_fully_at_right() {
+    fn chain_update_end_by_adjacent_fully_at_right() {
         let line = vec![Empty, Empty, Box { color: 4 }, Box { color: 4 }];
-        let c = Chain::new(4, 2, 0, line.len());
+        let mut c = Chain::new(4, 2, 0, line.len());
 
-        assert_eq!(line.len(), c.end_by_adjacent(&line).unwrap());
+        c.update_end_by_adjacent(&line).unwrap();
+
+        assert_eq!(line.len(), c.end());
     }
 
     #[test]
-    fn chain_end_by_adjacent_none() {
+    fn chain_update_end_by_adjacent_none() {
         let line = vec![Empty, Empty, Empty, Empty, Empty];
-        let c = Chain::new(4, 2, 0, 4);
+        let mut c = Chain::new(4, 2, 0, 4);
 
-        assert_eq!(4, c.end_by_adjacent(&line).unwrap());
+        c.update_end_by_adjacent(&line).unwrap();
+
+        assert_eq!(4, c.end());
     }
 
     #[test]
-    fn chain_end_by_adjacent_some_boxes() {
+    fn chain_update_end_by_adjacent_some_boxes() {
         let line = vec![Empty, Empty, Empty, Box { color: 4 }, Box { color: 4 }];
-        let c = Chain::new(4, 2, 0, 4);
+        let mut c = Chain::new(4, 2, 0, 4);
 
-        assert_eq!(2, c.end_by_adjacent(&line).unwrap());
+        c.update_end_by_adjacent(&line).unwrap();
+
+        assert_eq!(2, c.end());
     }
 
     #[test]
-    fn chain_end_by_adjacent_some_different_colored_boxes() {
+    fn chain_update_end_by_adjacent_some_different_colored_boxes() {
         let line = vec![Empty, Empty, Empty, Box { color: 2 }, Box { color: 1 }];
-        let c = Chain::new(4, 2, 0, 4);
+        let mut c = Chain::new(4, 2, 0, 4);
 
-        assert_eq!(4, c.end_by_adjacent(&line).unwrap());
+        c.update_end_by_adjacent(&line).unwrap();
+
+        assert_eq!(4, c.end());
     }
 
     #[test]
-    fn chain_end_by_adjacent_some_spaces() {
+    fn chain_update_end_by_adjacent_some_spaces() {
         let line = vec![Empty, Empty, Empty, Space, Space];
-        let c = Chain::new(4, 2, 0, 4);
+        let mut c = Chain::new(4, 2, 0, 4);
 
-        assert_eq!(4, c.end_by_adjacent(&line).unwrap());
+        c.update_end_by_adjacent(&line).unwrap();
+
+        assert_eq!(4, c.end());
     }
 
     #[test]
-    fn chain_end_by_adjacent_boxes_err() {
+    fn chain_update_end_by_adjacent_boxes_err() {
         let line = vec![
             Empty,
             Empty,
@@ -518,13 +570,13 @@ mod test {
             Box { color: 4 },
             Box { color: 4 },
         ];
-        let c = Chain::new(4, 2, 0, 4);
+        let mut c = Chain::new(4, 2, 0, 4);
 
-        assert!(c.end_by_adjacent(&line).is_err());
+        assert!(c.update_end_by_adjacent(&line).is_err());
     }
 
     #[test]
-    fn chain_end_by_adjacent_boxes_err_by_start() {
+    fn chain_update_end_by_adjacent_boxes_err_by_start() {
         let line = vec![
             Empty,
             Empty,
@@ -533,37 +585,43 @@ mod test {
             Box { color: 4 },
             Box { color: 4 },
         ];
-        let c = Chain::new(4, 2, 1, 5);
+        let mut c = Chain::new(4, 2, 1, 5);
 
-        assert!(c.end_by_adjacent(&line).is_err());
+        assert!(c.update_end_by_adjacent(&line).is_err());
     }
 
     #[test]
-    fn chain_start_by_gabs_nothing() {
+    fn chain_update_start_by_gabs_nothing() {
         let line = vec![Empty, Empty, Empty, Empty];
-        let c = Chain::new(4, 2, 2, line.len());
+        let mut c = Chain::new(4, 2, 2, line.len());
 
-        assert_eq!(2, c.start_by_gabs(&line).unwrap());
+        c.update_start_by_gabs(&line).unwrap();
+
+        assert_eq!(2, c.start());
     }
 
     #[test]
-    fn chain_start_by_gabs_spaces() {
+    fn chain_update_start_by_gabs_spaces() {
         let line = vec![Empty, Empty, Space, Empty, Space, Empty, Empty, Empty];
-        let c = Chain::new(4, 2, 1, line.len());
+        let mut c = Chain::new(4, 2, 1, line.len());
 
-        assert_eq!(5, c.start_by_gabs(&line).unwrap());
+        c.update_start_by_gabs(&line).unwrap();
+
+        assert_eq!(5, c.start());
     }
 
     #[test]
-    fn chain_start_by_gabs_boxes() {
+    fn chain_update_start_by_gabs_boxes() {
         let line = vec![Empty, Empty, Box { color: 4 }, Empty, Empty];
-        let c = Chain::new(4, 2, 1, line.len());
+        let mut c = Chain::new(4, 2, 1, line.len());
 
-        assert_eq!(1, c.start_by_gabs(&line).unwrap());
+        c.update_start_by_gabs(&line).unwrap();
+
+        assert_eq!(1, c.start());
     }
 
     #[test]
-    fn chain_start_by_gabs_different_colored_boxes() {
+    fn chain_update_start_by_gabs_different_colored_boxes() {
         let line = vec![
             Empty,
             Empty,
@@ -574,53 +632,61 @@ mod test {
             Empty,
             Empty,
         ];
-        let c = Chain::new(4, 2, 1, line.len());
+        let mut c = Chain::new(4, 2, 1, line.len());
 
-        assert_eq!(5, c.start_by_gabs(&line).unwrap());
+        c.update_start_by_gabs(&line).unwrap();
+
+        assert_eq!(5, c.start());
     }
 
     #[test]
-    fn chain_start_by_gabs_err() {
+    fn chain_update_start_by_gabs_err() {
         let line = vec![Empty, Empty, Box { color: 2 }, Empty];
-        let c = Chain::new(4, 2, 1, line.len());
+        let mut c = Chain::new(4, 2, 1, line.len());
 
-        assert!(c.start_by_gabs(&line).is_err());
+        assert!(c.update_start_by_gabs(&line).is_err());
     }
 
     #[test]
-    fn chain_start_by_gabs_err_by_end() {
+    fn chain_update_start_by_gabs_err_by_end() {
         let line = vec![Empty, Empty, Box { color: 2 }, Empty, Empty];
-        let c = Chain::new(4, 2, 1, 4);
+        let mut c = Chain::new(4, 2, 1, 4);
 
-        assert!(c.start_by_gabs(&line).is_err());
+        assert!(c.update_start_by_gabs(&line).is_err());
     }
 
     #[test]
-    fn chain_end_by_gabs_nothing() {
+    fn chain_update_end_by_gabs_nothing() {
         let line = vec![Empty, Empty, Empty, Empty];
-        let c = Chain::new(4, 2, 1, line.len());
+        let mut c = Chain::new(4, 2, 1, line.len());
 
-        assert_eq!(line.len(), c.end_by_gabs(&line).unwrap());
+        c.update_end_by_gabs(&line).unwrap();
+
+        assert_eq!(line.len(), c.end());
     }
 
     #[test]
-    fn chain_end_by_gabs_spaces() {
+    fn chain_update_end_by_gabs_spaces() {
         let line = vec![Empty, Empty, Empty, Space, Empty, Space, Empty, Empty];
-        let c = Chain::new(4, 2, 0, 7);
+        let mut c = Chain::new(4, 2, 0, 7);
 
-        assert_eq!(3, c.end_by_gabs(&line).unwrap());
+        c.update_end_by_gabs(&line).unwrap();
+
+        assert_eq!(3, c.end());
     }
 
     #[test]
-    fn chain_end_by_gabs_boxes() {
+    fn chain_update_end_by_gabs_boxes() {
         let line = vec![Empty, Empty, Box { color: 4 }, Empty, Empty];
-        let c = Chain::new(4, 2, 1, 4);
+        let mut c = Chain::new(4, 2, 1, 4);
 
-        assert_eq!(4, c.end_by_gabs(&line).unwrap());
+        c.update_end_by_gabs(&line).unwrap();
+
+        assert_eq!(4, c.end());
     }
 
     #[test]
-    fn chain_end_by_gabs_different_colored_boxes() {
+    fn chain_update_end_by_gabs_different_colored_boxes() {
         let line = vec![
             Empty,
             Empty,
@@ -631,24 +697,26 @@ mod test {
             Empty,
             Empty,
         ];
-        let c = Chain::new(4, 2, 1, 7);
+        let mut c = Chain::new(4, 2, 1, 7);
 
-        assert_eq!(3, c.end_by_gabs(&line).unwrap());
+        c.update_end_by_gabs(&line).unwrap();
+
+        assert_eq!(3, c.end());
     }
 
     #[test]
-    fn chain_end_by_gabs_err() {
+    fn chain_update_end_by_gabs_err() {
         let line = vec![Empty, Box { color: 2 }, Empty];
-        let c = Chain::new(4, 2, 0, line.len());
+        let mut c = Chain::new(4, 2, 0, line.len());
 
-        assert!(c.end_by_gabs(&line).is_err());
+        assert!(c.update_end_by_gabs(&line).is_err());
     }
 
     #[test]
-    fn chain_end_by_gabs_err_by_start() {
+    fn chain_update_end_by_gabs_err_by_start() {
         let line = vec![Empty, Empty, Box { color: 2 }, Empty, Empty];
-        let c = Chain::new(4, 2, 1, 4);
+        let mut c = Chain::new(4, 2, 1, 4);
 
-        assert!(c.end_by_gabs(&line).is_err());
+        assert!(c.update_end_by_gabs(&line).is_err());
     }
 }

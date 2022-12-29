@@ -29,7 +29,7 @@ How to implement:
 * Stop at the first box with the same color.
 * Subtract the length of the chain.
 
-See: `nonogram_rs::algo::chain::Chain::start_by_box_at_end`
+See: `nonogram_rs::algo::chain::Chain::update_start_by_box_at_end`
 
 ![](img/update-start-by-boxes-at-end.svg)
 
@@ -43,7 +43,7 @@ How to implement:
 * Check if it is a box of the same color.
 * If yes, advance by one and repeat.
 
-See: `nonogram_rs::algo::chain::Chain::start_by_adjacent`
+See: `nonogram_rs::algo::chain::Chain::update_start_by_adjacent`
 
 ![](img/update-start-by-adjacent.svg)
 
@@ -57,7 +57,7 @@ How to implement:
 * If it is a space or a box with a different color, reset the count to zero.
 * Continue until the count is equal to the length of the chain.
 
-See: `nonogram_rs::algo::chain::Chain::start_by_gabs`
+See: `nonogram_rs::algo::chain::Chain::update_start_by_gabs`
 
 ![](img/update-start-by-gabs.svg)
 
