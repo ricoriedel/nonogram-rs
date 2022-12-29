@@ -73,22 +73,23 @@ fn show() -> Result<(), &'static str> {
 
 fn map_color(color: char) -> Result<Color, &'static str> {
     match color {
-        'd' => Ok(Color::Black),
-        'r' => Ok(Color::DarkRed),
-        'g' => Ok(Color::DarkGreen),
-        'y' => Ok(Color::DarkYellow),
-        'b' => Ok(Color::DarkBlue),
-        'm' => Ok(Color::DarkMagenta),
-        'c' => Ok(Color::DarkCyan),
-        'w' => Ok(Color::Grey),
-        'D' => Ok(Color::DarkGrey),
+        '!' => Ok(Color::Reset),
+        '0' => Ok(Color::Black),
+        '1' => Ok(Color::DarkGrey),
+        '2' => Ok(Color::Grey),
+        '3' => Ok(Color::White),
         'R' => Ok(Color::Red),
         'G' => Ok(Color::Green),
         'Y' => Ok(Color::Yellow),
         'B' => Ok(Color::Blue),
         'M' => Ok(Color::Magenta),
         'C' => Ok(Color::Cyan),
-        'W' => Ok(Color::White),
+        'r' => Ok(Color::DarkRed),
+        'g' => Ok(Color::DarkGreen),
+        'y' => Ok(Color::DarkYellow),
+        'b' => Ok(Color::DarkBlue),
+        'm' => Ok(Color::DarkMagenta),
+        'c' => Ok(Color::DarkCyan),
         _ => Err(INVALID_COLOR)
     }
 }

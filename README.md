@@ -61,16 +61,14 @@ The following colors are supported by the CLI.
 Lowercase letters are dark and uppercase letters are bright colors.
 Note that the library supports arbitrary color types.
 
-| Key | Dark color   | Key | Bright color     |
-|:---:|:-------------|:---:|:-----------------|
-|  d  | dark (black) |  D  | dark (dark gray) |
-|  r  | red          |  R  | red              |
-|  g  | green        |  G  | green            |
-|  y  | yellow       |  Y  | yellow           |
-|  b  | blue         |  B  | blue             |
-|  m  | magenta      |  M  | magenta          |
-|  c  | cyan         |  C  | cyan             |
-|  w  | white (gray) |  W  | white            |
+| Key | Color     | Key | Color   | Key | Color        |
+|:---:|:----------|:---:|:--------|:---:|:-------------|
+|  !  | default   |  R  | red     |  r  | dark red     |
+|  0  | black     |  G  | green   |  g  | dark green   |
+|  1  | dark grey |  Y  | yellow  |  y  | dark yellow  |
+|  2  | gray      |  B  | blue    |  b  | dark blue    |
+|  3  | white     |  M  | magenta |  m  | dark magenta |
+|     |           |  C  | cyan    |  c  | dark cyan    |
 
 ## Algorithm
 The algorithm is explained in detail in a [separate document](ALGORITHM.md).
