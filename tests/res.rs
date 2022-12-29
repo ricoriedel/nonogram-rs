@@ -41,4 +41,12 @@ mod demo {
 
         assert!(layout.solve(()).is_ok());
     }
+
+    #[test]
+    fn flower() {
+        let json = include_str!("../res/flower.json");
+        let layout: Layout<char> = serde_json::from_str(json).unwrap();
+
+        assert!(layout.solve(()).is_ok());
+    }
 }

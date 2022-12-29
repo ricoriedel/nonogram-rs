@@ -33,5 +33,9 @@ fn palm_color(c: &mut Criterion) {
     bench_res(c, "palm-color");
 }
 
-criterion_group!(res, apple, apple_color, palm, palm_color);
+fn flower(c: &mut Criterion) {
+    bench_res(c, "flower");
+}
+
+criterion_group!(res, apple, apple_color, palm, palm_color, flower);
 criterion_main!(res);
