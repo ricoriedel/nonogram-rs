@@ -103,31 +103,24 @@ impl<T: Copy + PartialEq> Chain<T> {
     fn update_start_by_box_at_end(&mut self, line: &Vec<PartCell<T>>, end: usize) {
         let start = self.start + self.len;
 
-        if start >= end {
-            return;
+        for i in (start..end).rev() {
+            if line[i] == self.color {
+                self.start = i + 1 - self.len;
+                return;
+            }
         }
-        self.start = line[start..end].iter()
-            .rev()
-            .enumerate()
-            .filter(|(_, value)| **value == self.color)
-            .next()
-            .map(|(i, _)| end - i - self.len)
-            .unwrap_or(self.start);
     }
 
-    /// Mirror of [Chain::start_by_box_at_end].
+    /// Mirror of [Chain::update_start_by_box_at_end].
     fn update_end_by_box_at_start(&mut self, line: &Vec<PartCell<T>>, start: usize) {
         let end = self.end - self.len;
 
-        if start >= end {
-            return;
+        for i in start..end {
+            if line[i] == self.color {
+                self.end = i + self.len;
+                return;
+            }
         }
-        self.end = line[start..end].iter()
-            .enumerate()
-            .filter(|(_, value)| **value == self.color)
-            .next()
-            .map(|(i, _)| start + i + self.len)
-            .unwrap_or(self.end);
     }
 
     /// Finds a more precise start by looking at adjacent same colored boxes.
@@ -136,34 +129,31 @@ impl<T: Copy + PartialEq> Chain<T> {
         if self.start == 0 {
             return Ok(());
         }
-        let neighbour = self.start - 1;
         let end = self.end - self.len;
 
-        self.start = line[neighbour..end].iter()
-            .enumerate()
-            .filter(|(_, value)| **value != self.color)
-            .next()
-            .map(|(shift, _)| Ok(self.start + shift))
-            .unwrap_or(Err(Error::Invalid))?;
-        Ok(())
+        for i in self.start..=end {
+            if line[i - 1] != self.color {
+                self.start = i;
+                return Ok(());
+            }
+        }
+        Err(Error::Invalid)
     }
 
-    /// Mirror of [Chain::start_by_adjacent].
+    /// Mirror of [Chain::update_start_by_adjacent].
     fn update_end_by_adjacent(&mut self, line: &Vec<PartCell<T>>) -> Result<(), Error> {
         if self.end == line.len() {
             return Ok(());
         }
         let start = self.start + self.len;
-        let neighbour = self.end + 1;
 
-        self.end = line[start..neighbour].iter()
-            .rev()
-            .enumerate()
-            .filter(|(_, value)| **value != self.color)
-            .next()
-            .map(|(shift, _)| Ok(self.end - shift))
-            .unwrap_or(Err(Error::Invalid))?;
-        Ok(())
+        for i in (start..=self.end).rev() {
+            if line[i] != self.color {
+                self.end = i;
+                return Ok(());
+            }
+        }
+        Err(Error::Invalid)
     }
 
     /// Finds a more precise start by looking for a gab between spaces and other colored boxes.
