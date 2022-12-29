@@ -14,7 +14,7 @@ Examples of how to use this library can be found in the `tests/` directory.
 This library includes a CLI called `nonogram-cli` as a binary target.
 
 ```shell
-cargo build --bin nonogram-cli --all-features
+cargo build --bin nonogram-cli --features='cli'
 ```
 ```shell
 # Solve

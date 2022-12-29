@@ -10,11 +10,19 @@ keywords = ["nonogram", "puzzle", "solver"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"], optional = true }
+
 serde_json = { version = "1.0", optional = true }
 crossterm = { version = "0.25", optional = true }
 clap = { version = "4.0", features = ["derive"], optional = true }
 
+[dev-dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
+
+[features]
+cli = ["dep:serde_json", "dep:crossterm", "dep:clap", "serde"]
+
 [[bin]]
 name = "nonogram-cli"
 path = "src/bin/nonogram_cli.rs"
-required-features = ["serde", "serde_json", "crossterm", "clap"]
+required-features = ["cli"]

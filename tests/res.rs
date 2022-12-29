@@ -1,4 +1,4 @@
-#[cfg(all(feature = "serde", feature = "serde_json"))]
+#[cfg(feature = "serde")]
 mod demo {
     use nonogram_rs::Layout;
 
