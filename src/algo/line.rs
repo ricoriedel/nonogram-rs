@@ -82,7 +82,7 @@ impl<T: Copy + PartialEq> Line<T> {
             let index = position - 1;
 
             let (prev_start, same_color) = self.check_right(index);
-            let border = self.update_start(index, prev_start, same_color)?;
+            let border = self.data[index].update_start(&self.line, prev_start, same_color)?;
 
             if prev_start < border {
                 // Backtrack
@@ -103,7 +103,7 @@ impl<T: Copy + PartialEq> Line<T> {
 
         while index < self.data.len() {
             let (prev_end, same_color) = self.check_left(index);
-            let border = self.update_end(index, prev_end, same_color)?;
+            let border = self.data[index].update_end(&self.line, prev_end, same_color)?;
 
             if prev_end > border {
                 // Backtrack
@@ -143,27 +143,6 @@ impl<T: Copy + PartialEq> Line<T> {
             (0, false)
         }
     }
-
-    /// Updates the start of a single chain.
-    fn update_start(&mut self, index: usize, end: usize, same_color: bool) -> Result<usize, Error> {
-        let chain = &mut self.data[index];
-        chain.set_start(chain.start_by_box_at_end(&self.line, end));
-        chain.set_start(chain.start_by_adjacent(&self.line)?);
-        chain.set_start(chain.start_by_gabs(&self.line)?);
-
-        Ok(chain.prev_start_border(same_color))
-    }
-
-    /// Updates the end of a single chain.
-    fn update_end(&mut self, index: usize, start: usize, same_color: bool) -> Result<usize, Error> {
-        let chain = &mut self.data[index];
-        chain.set_end(chain.end_by_box_at_start(&self.line, start));
-        chain.set_end(chain.end_by_adjacent(&self.line)?);
-        chain.set_end(chain.end_by_gabs(&self.line)?);
-
-        Ok(chain.prev_end_border(same_color))
-    }
-
 
     /// Writes all known boxes to the line.
     fn write_boxes(&mut self) {

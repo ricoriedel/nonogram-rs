@@ -49,24 +49,6 @@ impl<T: Copy + PartialEq> Chain<T> {
         self.end = end;
     }
 
-    /// The smallest start value of the previous chain before we need to backtrack.
-    pub fn prev_start_border(&self, same_color: bool) -> usize {
-        if same_color {
-            self.start + self.len + 1
-        } else {
-            self.start + self.len
-        }
-    }
-
-    /// The highest end value of the previous chain before we need to backtrack.
-    pub fn prev_end_border(&self, same_color: bool) -> usize {
-        if same_color {
-            self.end - self.len - 1
-        } else {
-            self.end - self.len
-        }
-    }
-
     /// Returns the range of PartCells which must be filled.
     pub fn known_cells(&self) -> Range<usize> {
         let start = self.end - self.len;
@@ -80,9 +62,45 @@ impl<T: Copy + PartialEq> Chain<T> {
         self.end - self.start == self.len
     }
 
+    /// Updates the start of a the chain.
+    pub fn update_start(&mut self, line: &Vec<PartCell<T>>, end: usize, same_color: bool) -> Result<usize, Error> {
+        self.set_start(self.start_by_box_at_end(line, end));
+        self.set_start(self.start_by_adjacent(line)?);
+        self.set_start(self.start_by_gabs(line)?);
+
+        Ok(self.prev_start_border(same_color))
+    }
+
+    /// Updates the end of a the chain.
+    pub fn update_end(&mut self, line: &Vec<PartCell<T>>, start: usize, same_color: bool) -> Result<usize, Error> {
+        self.set_end(self.end_by_box_at_start(line, start));
+        self.set_end(self.end_by_adjacent(line)?);
+        self.set_end(self.end_by_gabs(line)?);
+
+        Ok(self.prev_end_border(same_color))
+    }
+
+    /// The smallest start value of the previous chain before we need to backtrack.
+    fn prev_start_border(&self, same_color: bool) -> usize {
+        if same_color {
+            self.start + self.len + 1
+        } else {
+            self.start + self.len
+        }
+    }
+
+    /// The highest end value of the previous chain before we need to backtrack.
+    fn prev_end_border(&self, same_color: bool) -> usize {
+        if same_color {
+            self.end - self.len - 1
+        } else {
+            self.end - self.len
+        }
+    }
+
     /// Finds a more precise start by looking at boxes on the right.
     /// Boxes beyond the `end` parameter are ignored.
-    pub fn start_by_box_at_end(&self, line: &Vec<PartCell<T>>, end: usize) -> usize {
+    fn start_by_box_at_end(&self, line: &Vec<PartCell<T>>, end: usize) -> usize {
         let start = self.start + self.len;
 
         if start >= end {
@@ -98,7 +116,7 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// Mirror of [Chain::start_by_box_at_end].
-    pub fn end_by_box_at_start(&self, line: &Vec<PartCell<T>>, start: usize) -> usize {
+    fn end_by_box_at_start(&self, line: &Vec<PartCell<T>>, start: usize) -> usize {
         let end = self.end - self.len;
 
         if start >= end {
@@ -114,7 +132,7 @@ impl<T: Copy + PartialEq> Chain<T> {
 
     /// Finds a more precise start by looking at adjacent same colored boxes.
     /// Fails if the range between start and end gets too small to fit the chain.
-    pub fn start_by_adjacent(&self, line: &Vec<PartCell<T>>) -> Result<usize, Error> {
+    fn start_by_adjacent(&self, line: &Vec<PartCell<T>>) -> Result<usize, Error> {
         if self.start == 0 {
             return Ok(self.start);
         }
@@ -130,7 +148,7 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// Mirror of [Chain::start_by_adjacent].
-    pub fn end_by_adjacent(&self, line: &Vec<PartCell<T>>) -> Result<usize, Error> {
+    fn end_by_adjacent(&self, line: &Vec<PartCell<T>>) -> Result<usize, Error> {
         if self.end == line.len() {
             return Ok(self.end);
         }
@@ -148,7 +166,7 @@ impl<T: Copy + PartialEq> Chain<T> {
 
     /// Finds a more precise start by looking for a gab between spaces and other colored boxes.
     /// Fails if the range between start and end gets too small to fit the chain.
-    pub fn start_by_gabs(&self, line: &Vec<PartCell<T>>) -> Result<usize, Error> {
+    fn start_by_gabs(&self, line: &Vec<PartCell<T>>) -> Result<usize, Error> {
         let mut count = 0;
 
         for i in self.start..self.end {
@@ -165,7 +183,7 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// Mirror of [Chain::start_by_gabs].
-    pub fn end_by_gabs(&self, line: &Vec<PartCell<T>>) -> Result<usize, Error> {
+    fn end_by_gabs(&self, line: &Vec<PartCell<T>>) -> Result<usize, Error> {
         let mut count = 0;
 
         for i in (self.start..self.end).rev() {
