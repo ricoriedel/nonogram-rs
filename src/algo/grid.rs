@@ -68,7 +68,7 @@ impl<T: Copy + PartialEq> Grid<T> {
 
     /// Finds an unsolved chain.
     ///
-    /// Tuple: `(color, line, cell)`
+    /// Tuple: `(line, cell, color)`
     pub fn find_unsolved(&self) -> Option<(usize, usize, T)> {
         self.lines.iter()
             .enumerate()

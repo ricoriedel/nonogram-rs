@@ -66,7 +66,7 @@ impl<T: Copy + PartialEq> Branch<T> {
         while let Some(mut branch) = branches.pop() {
             match branch.try_solve(&token) {
                 Ok(_) => {
-                    match branch.cols.find_unsolved() {
+                    match branch.find_unsolved() {
                         None => return Ok(branch.cols.try_into().unwrap()),
                         Some(unsolved) => {
                             let (a, b) = branch.fork(unsolved);
@@ -107,6 +107,16 @@ impl<T: Copy + PartialEq> Branch<T> {
         fork.rows.set(row, col, PartCell::Space);
 
         (self, fork)
+    }
+
+    fn find_unsolved(&self) -> Option<(usize, usize, T)> {
+        let (cols, rows) = self.cols.len();
+
+        if cols < rows {
+            self.cols.find_unsolved()
+        } else {
+            self.rows.find_unsolved().map(|(line, cell, color)| (cell, line, color))
+        }
     }
 }
 
