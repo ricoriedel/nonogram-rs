@@ -18,6 +18,7 @@ clap = { version = "4.0", features = ["derive"], optional = true }
 [dev-dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
+criterion = "0.4"
 
 [features]
 cli = ["dep:serde_json", "dep:crossterm", "dep:clap", "serde"]
@@ -26,3 +27,8 @@ cli = ["dep:serde_json", "dep:crossterm", "dep:clap", "serde"]
 name = "nonogram-cli"
 path = "src/bin/nonogram_cli.rs"
 required-features = ["cli"]
+
+[[bench]]
+name = "bench"
+harness = false
+required-features = ["serde"]
