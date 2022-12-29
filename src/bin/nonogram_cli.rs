@@ -1,9 +1,9 @@
-use std::io::{stdin, stdout, Write};
 use nonogram_rs::*;
+use std::io::{stdin, stdout, Write};
 
 use clap::{Parser, Subcommand};
-use crossterm::{ExecutableCommand, QueueableCommand};
 use crossterm::style::{Color, Print, SetForegroundColor};
+use crossterm::{ExecutableCommand, QueueableCommand};
 
 #[derive(Parser)]
 #[command(version)]
@@ -18,7 +18,7 @@ enum Command {
     /// Solve a nonogram and output the result
     Solve,
     /// Print a solved nonogram to the terminal
-    Show
+    Show,
 }
 
 const INVALID_LAYOUT: &str = "Invalid layout.";
@@ -37,7 +37,7 @@ fn solve() -> Result<(), String> {
     let layout: Layout<char> = serde_json::from_reader(stdin()).map_err(|e| e.to_string())?;
     let nonogram = layout.solve(()).map_err(|_| INVALID_LAYOUT.to_string())?;
 
-    serde_json::to_writer(stdout(),  &nonogram).unwrap();
+    serde_json::to_writer(stdout(), &nonogram).unwrap();
 
     // Sometimes flush does not suffice.
     stdout().execute(Print("\n")).unwrap();
@@ -88,6 +88,6 @@ fn map_color(color: char) -> Result<Color, String> {
         'b' => Ok(Color::DarkBlue),
         'm' => Ok(Color::DarkMagenta),
         'c' => Ok(Color::DarkCyan),
-        _ => Err(INVALID_COLOR.to_string())
+        _ => Err(INVALID_COLOR.to_string()),
     }
 }

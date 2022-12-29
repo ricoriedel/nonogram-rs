@@ -1,9 +1,9 @@
-use crate::{Cell, Error, Item, Nonogram, Token};
 use crate::algo::grid::Grid;
+use crate::{Cell, Error, Item, Nonogram, Token};
 
 pub mod chain;
-pub mod line;
 mod grid;
+pub mod line;
 
 /// A [super::Cell] that might not has a value yet.
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -50,10 +50,7 @@ impl<T: Copy + PartialEq> Branch<T> {
         let cols = Grid::build(col_grid, row_grid.len());
         let rows = Grid::build(row_grid, col_grid.len());
 
-        Self {
-            cols,
-            rows,
-        }
+        Self { cols, rows }
     }
 
     /// Tries to find the solution to this branch.
@@ -65,15 +62,13 @@ impl<T: Copy + PartialEq> Branch<T> {
 
         while let Some(mut branch) = branches.pop() {
             match branch.try_solve(&token) {
-                Ok(_) => {
-                    match branch.find_unsolved() {
-                        None => return Ok(branch.cols.try_into().unwrap()),
-                        Some(unsolved) => {
-                            let (a, b) = branch.fork(unsolved);
+                Ok(_) => match branch.find_unsolved() {
+                    None => return Ok(branch.cols.try_into().unwrap()),
+                    Some(unsolved) => {
+                        let (a, b) = branch.fork(unsolved);
 
-                            branches.push(a);
-                            branches.push(b);
-                        }
+                        branches.push(a);
+                        branches.push(b);
                     }
                 },
                 Err(Error::Cancelled) => return Err(Error::Cancelled),
@@ -115,15 +110,17 @@ impl<T: Copy + PartialEq> Branch<T> {
         if cols < rows {
             self.cols.find_unsolved()
         } else {
-            self.rows.find_unsolved().map(|(line, cell, color)| (cell, line, color))
+            self.rows
+                .find_unsolved()
+                .map(|(line, cell, color)| (cell, line, color))
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::Cancelled;
     use super::*;
+    use crate::Cancelled;
     use crate::Cell::*;
 
     #[derive(Default)]
@@ -165,12 +162,8 @@ mod test {
 
     #[test]
     fn branch_solve_invalid() {
-        let cols = vec![
-            vec![Item { color: 'a', len: 1 }],
-        ];
-        let rows = vec![
-            vec![Item { color: 'b', len: 1 }],
-        ];
+        let cols = vec![vec![Item { color: 'a', len: 1 }]];
+        let rows = vec![vec![Item { color: 'b', len: 1 }]];
         let branch = Branch::build(&cols, &rows);
 
         assert!(branch.solve(()).is_err());
@@ -201,6 +194,9 @@ mod test {
         ];
         let branch = Branch::build(&data, &data);
 
-        assert!(matches!(branch.solve(Cancel::default()), Err(Error::Cancelled)));
+        assert!(matches!(
+            branch.solve(Cancel::default()),
+            Err(Error::Cancelled)
+        ));
     }
 }

@@ -1,14 +1,14 @@
 mod algo;
 mod cancel;
-mod nonogram;
 mod layout;
+mod nonogram;
 
 #[cfg(feature = "serde")]
 mod serialize;
 
-pub use nonogram::{Cell, Nonogram};
+pub use cancel::{Cancelled, Token};
 pub use layout::{Item, Layout};
-pub use cancel::{Token, Cancelled};
+pub use nonogram::{Cell, Nonogram};
 
 use crate::algo::Branch;
 
@@ -18,10 +18,14 @@ pub enum Error {
     /// The supplied data doesn't result in a valid nonogram.
     Invalid,
     /// The operation has been cancelled.
-    Cancelled
+    Cancelled,
 }
 
 /// Solves a nonogram.
-pub fn solve<T: Copy + PartialEq>(cols: &Vec<Vec<Item<T>>>, rows: &Vec<Vec<Item<T>>>, token: impl Token) -> Result<Nonogram<T>, Error> {
+pub fn solve<T: Copy + PartialEq>(
+    cols: &Vec<Vec<Item<T>>>,
+    rows: &Vec<Vec<Item<T>>>,
+    token: impl Token,
+) -> Result<Nonogram<T>, Error> {
     Branch::build(cols, rows).solve(token)
 }

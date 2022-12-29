@@ -1,6 +1,6 @@
-use std::ops::{Index, IndexMut};
 #[cfg(feature = "serde")]
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::ops::{Index, IndexMut};
 
 /// A cell of a [Nonogram].
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -71,10 +71,7 @@ impl<T: Copy> TryFrom<Vec<Vec<Cell<T>>>> for Nonogram<T> {
 
     fn try_from(value: Vec<Vec<Cell<T>>>) -> Result<Self, Self::Error> {
         let row_len = value.len();
-        let col_len = value.iter()
-            .map(Vec::len)
-            .next()
-            .unwrap_or(0);
+        let col_len = value.iter().map(Vec::len).next().unwrap_or(0);
 
         let mut nonogram = Nonogram::new(col_len, row_len);
 
@@ -123,7 +120,6 @@ impl<T> IndexMut<(usize, usize)> for Nonogram<T> {
         unsafe { self.data.get_unchecked_mut(index) }
     }
 }
-
 
 #[cfg(test)]
 mod test {
@@ -196,7 +192,7 @@ mod test {
     fn nonogram_from_vec() {
         let vec = vec![
             vec![Cell::Box { color: 3 }, Cell::Space, Cell::Space],
-            vec![Cell::Box { color: 2 }, Cell::Box { color: 5 }, Cell::Space]
+            vec![Cell::Box { color: 2 }, Cell::Box { color: 5 }, Cell::Space],
         ];
 
         let nonogram: Nonogram<i32> = vec.try_into().unwrap();

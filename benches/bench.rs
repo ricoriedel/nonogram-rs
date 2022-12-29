@@ -1,6 +1,6 @@
-use std::fs::read_to_string;
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{criterion_group, criterion_main, Criterion};
 use nonogram_rs::Layout;
+use std::fs::read_to_string;
 
 fn bench_res(c: &mut Criterion, name: &str) {
     let path = format!("res/{}.json", name);
@@ -12,7 +12,7 @@ fn bench_res(c: &mut Criterion, name: &str) {
     let swapped_name = format!("{}-swapped", name);
     let swapped = Layout {
         cols: layout.rows,
-        rows: layout.cols
+        rows: layout.cols,
     };
     c.bench_function(&swapped_name, |b| b.iter(|| swapped.solve(()).unwrap()));
 }

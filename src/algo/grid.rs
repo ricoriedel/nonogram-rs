@@ -1,6 +1,6 @@
 use crate::algo::line::Line;
-use crate::{Error, Item, Nonogram};
 use crate::algo::PartCell;
+use crate::{Error, Item, Nonogram};
 
 /// A group of lines including metadata.
 #[derive(Clone)]
@@ -11,16 +11,15 @@ pub struct Grid<T> {
 impl<T: Copy + PartialEq> Grid<T> {
     /// Constructs a new grid.
     pub fn build(numbers: &Vec<Vec<Item<T>>>, length: usize) -> Self {
-        let lines = numbers.iter()
-            .map(|col| Line::build(col, length))
-            .collect();
+        let lines = numbers.iter().map(|col| Line::build(col, length)).collect();
 
         Self { lines }
     }
 
     /// Returns whether the grid needs to be updated.
     pub fn flagged(&self) -> bool {
-        self.lines.iter()
+        self.lines
+            .iter()
             .map(Line::flagged)
             .fold(false, |a, b| a | b)
     }
@@ -50,9 +49,7 @@ impl<T: Copy + PartialEq> Grid<T> {
     ///
     /// Tuple: `(lines, cells)`
     pub fn len(&self) -> (usize, usize) {
-        let inner = self.lines.first()
-            .map(Line::len)
-            .unwrap_or(0);
+        let inner = self.lines.first().map(Line::len).unwrap_or(0);
 
         (self.lines.len(), inner)
     }
@@ -70,11 +67,13 @@ impl<T: Copy + PartialEq> Grid<T> {
     ///
     /// Tuple: `(line, cell, color)`
     pub fn find_unsolved(&self) -> Option<(usize, usize, T)> {
-        self.lines.iter()
+        self.lines
+            .iter()
             .enumerate()
-            .filter_map(|(line, data)|
+            .filter_map(|(line, data)| {
                 data.find_unsolved()
-                    .map(|(cell, color)| (line, cell, color)))
+                    .map(|(cell, color)| (line, cell, color))
+            })
             .next()
     }
 }
@@ -103,27 +102,17 @@ mod test {
 
     #[test]
     fn grid_set() {
-        let cols = vec![
-            Vec::new(),
-            Vec::new(),
-            Vec::new(),
-            Vec::new(),
-        ];
+        let cols = vec![Vec::new(), Vec::new(), Vec::new(), Vec::new()];
         let mut grid = Grid::build(&cols, 6);
 
-        grid.set(1, 5, PartCell::Box { color: 2});
+        grid.set(1, 5, PartCell::Box { color: 2 });
 
         assert!(matches!(grid.get(1, 5), PartCell::Box { color: 2 }));
     }
 
     #[test]
     fn grid_flagged() {
-        let cols = vec![
-            Vec::new(),
-            Vec::new(),
-            Vec::new(),
-            Vec::new(),
-        ];
+        let cols = vec![Vec::new(), Vec::new(), Vec::new(), Vec::new()];
         let mut grid = Grid::build(&cols, 6);
 
         grid.set(2, 4, PartCell::Box { color: 4 });
@@ -133,10 +122,7 @@ mod test {
 
     #[test]
     fn grid_update() {
-        let cols = vec![
-            vec![Item::new(6, 2)],
-            vec![],
-        ];
+        let cols = vec![vec![Item::new(6, 2)], vec![]];
         let mut grid = Grid::build(&cols, 2);
 
         grid.update().unwrap();
@@ -149,10 +135,7 @@ mod test {
 
     #[test]
     fn grid_update_not_flagged() {
-        let cols = vec![
-            vec![Item::new(6, 2)],
-            vec![],
-        ];
+        let cols = vec![vec![Item::new(6, 2)], vec![]];
         let mut grid = Grid::build(&cols, 2);
 
         grid.update().unwrap();
@@ -162,10 +145,7 @@ mod test {
 
     #[test]
     fn grid_len() {
-        let cols = vec![
-            Vec::new(),
-            Vec::new(),
-        ];
+        let cols = vec![Vec::new(), Vec::new()];
         let grid: Grid<()> = Grid::build(&cols, 5);
 
         assert_eq!((2, 5), grid.len())
@@ -173,14 +153,8 @@ mod test {
 
     #[test]
     fn grid_write_to() {
-        let cols = vec![
-            vec![Item::new(6, 2)],
-            vec![],
-        ];
-        let rows = vec![
-            vec![Item::new(6, 1)],
-            vec![Item::new(6, 1)],
-        ];
+        let cols = vec![vec![Item::new(6, 2)], vec![]];
+        let rows = vec![vec![Item::new(6, 1)], vec![Item::new(6, 1)]];
         let mut cols = Grid::build(&cols, 2);
         let mut rows = Grid::build(&rows, 2);
 
@@ -195,10 +169,7 @@ mod test {
 
     #[test]
     fn grid_find_unsolved_some() {
-        let cols = vec![
-            vec![Item::new(5, 1)],
-            vec![],
-        ];
+        let cols = vec![vec![Item::new(5, 1)], vec![]];
         let mut grid = Grid::build(&cols, 3);
 
         grid.set(0, 0, PartCell::Space);
@@ -209,10 +180,7 @@ mod test {
 
     #[test]
     fn grid_find_unsolved_none() {
-        let cols = vec![
-            vec![Item::new(5, 1)],
-            vec![],
-        ];
+        let cols = vec![vec![Item::new(5, 1)], vec![]];
         let mut grid = Grid::build(&cols, 2);
 
         grid.set(0, 0, PartCell::Space);
@@ -226,10 +194,7 @@ mod test {
 
     #[test]
     fn nonogram_try_from_grid() {
-        let cols = vec![
-            vec![Item::new(6, 2)],
-            vec![],
-        ];
+        let cols = vec![vec![Item::new(6, 2)], vec![]];
         let mut cols = Grid::build(&cols, 2);
 
         cols.update().unwrap();
@@ -244,9 +209,7 @@ mod test {
 
     #[test]
     fn nonogram_try_from_grid_err() {
-        let cols = vec![
-            vec![Item::new(6, 1)],
-        ];
+        let cols = vec![vec![Item::new(6, 1)]];
         let mut cols = Grid::build(&cols, 2);
 
         cols.update().unwrap();

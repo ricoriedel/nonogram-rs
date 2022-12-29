@@ -1,6 +1,6 @@
-use std::ops::Range;
-use crate::Error;
 use crate::algo::PartCell;
+use crate::Error;
+use std::ops::Range;
 
 /// Metadata about a chain of [PartCell::Box]s.
 #[derive(Clone, Debug)]
@@ -63,7 +63,12 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// Updates the start of a the chain.
-    pub fn update_start(&mut self, line: &Vec<PartCell<T>>, end: usize, same_color: bool) -> Result<usize, Error> {
+    pub fn update_start(
+        &mut self,
+        line: &Vec<PartCell<T>>,
+        end: usize,
+        same_color: bool,
+    ) -> Result<usize, Error> {
         self.update_start_by_box_at_end(line, end);
         self.update_start_by_adjacent(line)?;
         self.update_start_by_gabs(line)?;
@@ -72,7 +77,12 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// Updates the end of a the chain.
-    pub fn update_end(&mut self, line: &Vec<PartCell<T>>, start: usize, same_color: bool) -> Result<usize, Error> {
+    pub fn update_end(
+        &mut self,
+        line: &Vec<PartCell<T>>,
+        start: usize,
+        same_color: bool,
+    ) -> Result<usize, Error> {
         self.update_end_by_box_at_start(line, start);
         self.update_end_by_adjacent(line)?;
         self.update_end_by_gabs(line)?;
@@ -165,7 +175,7 @@ impl<T: Copy + PartialEq> Chain<T> {
             count = match line[i] {
                 PartCell::Space => 0,
                 PartCell::Box { color } if color != self.color => 0,
-                _ => count + 1
+                _ => count + 1,
             };
             if count == self.len {
                 self.start = i + 1 - self.len;
@@ -183,7 +193,7 @@ impl<T: Copy + PartialEq> Chain<T> {
             count = match line[i] {
                 PartCell::Space => 0,
                 PartCell::Box { color } if color != self.color => 0,
-                _ => count + 1
+                _ => count + 1,
             };
             if count == self.len {
                 self.end = i + self.len;
@@ -281,7 +291,7 @@ mod test {
         let mut c = Chain::new(7, 3, 0, line.len());
 
         c.update_start_by_box_at_end(&line, line.len());
-        
+
         assert_eq!(2, c.start());
     }
 
@@ -291,7 +301,7 @@ mod test {
         let mut c = Chain::new(7, 3, 0, line.len());
 
         c.update_start_by_box_at_end(&line, 4);
-        
+
         assert_eq!(0, c.start());
     }
 
@@ -308,7 +318,7 @@ mod test {
         let mut c = Chain::new(1, 3, 0, line.len());
 
         c.update_start_by_box_at_end(&line, line.len());
-        
+
         assert_eq!(1, c.start());
     }
 
@@ -326,7 +336,7 @@ mod test {
         let mut c = Chain::new(7, 2, 0, line.len());
 
         c.update_start_by_box_at_end(&line, line.len());
-        
+
         assert_eq!(4, c.start());
     }
 
@@ -336,7 +346,7 @@ mod test {
         let mut c = Chain::new(7, 3, 0, line.len());
 
         c.update_start_by_box_at_end(&line, line.len());
-        
+
         assert_eq!(0, c.start());
     }
 
@@ -346,7 +356,7 @@ mod test {
         let mut c = Chain::new(7, 3, 0, 4);
 
         c.update_start_by_box_at_end(&line, 3);
-        
+
         assert_eq!(0, c.start());
     }
 
@@ -356,7 +366,7 @@ mod test {
         let mut c = Chain::new(7, 2, 0, line.len());
 
         c.update_end_by_box_at_start(&line, 0);
-        
+
         assert_eq!(4, c.end());
     }
 
@@ -366,7 +376,7 @@ mod test {
         let mut c = Chain::new(7, 3, 0, line.len());
 
         c.update_end_by_box_at_start(&line, 0);
-        
+
         assert_eq!(4, c.end());
     }
 
@@ -376,7 +386,7 @@ mod test {
         let mut c = Chain::new(7, 3, 0, line.len());
 
         c.update_end_by_box_at_start(&line, 2);
-        
+
         assert_eq!(6, c.end());
     }
 
@@ -393,7 +403,7 @@ mod test {
         let mut c = Chain::new(1, 3, 0, line.len());
 
         c.update_end_by_box_at_start(&line, 0);
-        
+
         assert_eq!(5, c.end());
     }
 

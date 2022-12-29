@@ -1,7 +1,7 @@
-use std::ops::Range;
 use crate::algo::chain::Chain;
-use crate::{Error, Item};
 use crate::algo::PartCell;
+use crate::{Error, Item};
+use std::ops::Range;
 
 /// A line of a nonogram including metadata.
 #[derive(Clone, Debug)]
@@ -14,7 +14,8 @@ pub struct Line<T> {
 impl<T: Copy + PartialEq> Line<T> {
     /// Constructs a new line.
     pub fn build(numbers: &Vec<Item<T>>, len: usize) -> Self {
-        let data = numbers.iter()
+        let data = numbers
+            .iter()
             .filter(|num| num.len > 0)
             .map(|c| Chain::new(c.color, c.len, 0, len))
             .collect();
@@ -67,7 +68,8 @@ impl<T: Copy + PartialEq> Line<T> {
     ///
     /// Tuple: `(cell, color)`
     pub fn find_unsolved(&self) -> Option<(usize, T)> {
-        self.data.iter()
+        self.data
+            .iter()
             .filter(|c| !c.solved())
             .map(|chain| (chain.start(), chain.color()))
             .next()
@@ -147,7 +149,12 @@ impl<T: Copy + PartialEq> Line<T> {
     /// Writes all known boxes to the line.
     fn write_boxes(&mut self) {
         for chain in 0..self.data.len() {
-            self.fill(self.data[chain].known_cells(), PartCell::Box { color: self.data[chain].color() });
+            self.fill(
+                self.data[chain].known_cells(),
+                PartCell::Box {
+                    color: self.data[chain].color(),
+                },
+            );
         }
     }
 
@@ -190,11 +197,7 @@ mod test {
 
     #[test]
     fn line_update_different_colors() {
-        let data = vec![
-            Item::new('a', 2),
-            Item::new('b', 2),
-            Item::new('c', 1),
-        ];
+        let data = vec![Item::new('a', 2), Item::new('b', 2), Item::new('c', 1)];
         let mut line = Line::build(&data, 5);
         line.update().unwrap();
 
@@ -207,10 +210,7 @@ mod test {
 
     #[test]
     fn line_update_same_colors() {
-        let data = vec![
-            Item::new('a', 2),
-            Item::new('a', 2),
-        ];
+        let data = vec![Item::new('a', 2), Item::new('a', 2)];
         let mut line = Line::build(&data, 5);
         line.update().unwrap();
 
@@ -223,10 +223,7 @@ mod test {
 
     #[test]
     fn line_update_unknown_cells() {
-        let data = vec![
-            Item::new('a', 3),
-            Item::new('a', 2),
-        ];
+        let data = vec![Item::new('a', 3), Item::new('a', 2)];
         let mut line = Line::build(&data, 7);
         line.update().unwrap();
 
@@ -241,9 +238,7 @@ mod test {
 
     #[test]
     fn line_update_gab_with_spaces() {
-        let data = vec![
-            Item::new('a', 3)
-        ];
+        let data = vec![Item::new('a', 3)];
         let mut line = Line::build(&data, 7);
         line.set(1, Space);
         line.set(5, Space);
@@ -261,11 +256,7 @@ mod test {
 
     #[test]
     fn line_update_gab_with_different_colored_boxes() {
-        let data = vec![
-            Item::new('b', 1),
-            Item::new('a', 2),
-            Item::new('b', 1),
-        ];
+        let data = vec![Item::new('b', 1), Item::new('a', 2), Item::new('b', 1)];
         let mut line = Line::build(&data, 6);
         line.set(1, Box { color: 'b' });
         line.set(2, Box { color: 'a' });
@@ -284,10 +275,7 @@ mod test {
 
     #[test]
     fn line_update_gab_with_spaces_and_same_colored_boxes() {
-        let data = vec![
-            Item::new('a', 2),
-            Item::new('a', 2),
-        ];
+        let data = vec![Item::new('a', 2), Item::new('a', 2)];
         let mut line = Line::build(&data, 6);
         line.set(1, Box { color: 'a' });
         line.set(2, Space);
@@ -306,11 +294,7 @@ mod test {
 
     #[test]
     fn line_update_gab_between_different_colored_boxes() {
-        let data = vec![
-            Item::new('a', 1),
-            Item::new('b', 2),
-            Item::new('a', 1),
-        ];
+        let data = vec![Item::new('a', 1), Item::new('b', 2), Item::new('a', 1)];
         let mut line = Line::build(&data, 6);
         line.set(1, Box { color: 'a' });
         line.set(4, Box { color: 'a' });
@@ -353,10 +337,7 @@ mod test {
 
     #[test]
     fn line_find_unsolved_none() {
-        let data = vec![
-            Item::new('a', 1),
-            Item::new('a', 1),
-        ];
+        let data = vec![Item::new('a', 1), Item::new('a', 1)];
         let mut line = Line::build(&data, 4);
         line.set(0, Box { color: 'a' });
         line.set(2, Box { color: 'a' });
@@ -368,10 +349,7 @@ mod test {
 
     #[test]
     fn line_find_unsolved_some() {
-        let data = vec![
-            Item::new('a', 2),
-            Item::new('b', 1),
-        ];
+        let data = vec![Item::new('a', 2), Item::new('b', 1)];
         let mut line = Line::build(&data, 6);
         line.set(0, Space);
         line.set(5, Box { color: 'b' });

@@ -1,12 +1,12 @@
-#[cfg(feature = "serde")]
-use serde::{Serialize, Deserialize};
 use crate::{Error, Nonogram, Token};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 /// An item in a number grid.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Item<T> {
     pub color: T,
-    pub len: usize
+    pub len: usize,
 }
 
 impl<T> Item<T> {
@@ -41,12 +41,8 @@ mod test {
 
     #[test]
     fn layout_solve() {
-        let cols = vec![
-            vec![Item::new('a', 1)]
-        ];
-        let rows = vec![
-            vec![Item::new('a', 1)]
-        ];
+        let cols = vec![vec![Item::new('a', 1)]];
+        let rows = vec![vec![Item::new('a', 1)]];
         let layout = Layout::new(cols, rows);
 
         assert!(layout.solve(()).is_ok());

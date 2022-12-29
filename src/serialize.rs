@@ -1,9 +1,12 @@
-use serde::{Serialize, Deserialize, Serializer, Deserializer};
-use serde::de::Error;
 use crate::{Cell, Nonogram};
+use serde::de::Error;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 impl<T: Copy + Serialize> Serialize for Nonogram<T> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         let data: Vec<Vec<Cell<T>>> = self.clone().into();
 
         data.serialize(serializer)
@@ -11,7 +14,10 @@ impl<T: Copy + Serialize> Serialize for Nonogram<T> {
 }
 
 impl<'a, T: Copy + Deserialize<'a>> Deserialize<'a> for Nonogram<T> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'a> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'a>,
+    {
         let data: Vec<Vec<Cell<T>>> = Vec::deserialize(deserializer)?;
 
         data.try_into()
