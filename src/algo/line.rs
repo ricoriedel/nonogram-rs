@@ -4,7 +4,7 @@ use crate::{Error, Item};
 use std::ops::Range;
 
 /// A line of a nonogram including metadata.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Line<T> {
     data: Vec<Chain<T>>,
     line: Vec<PartCell<T>>,

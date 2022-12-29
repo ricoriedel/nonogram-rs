@@ -3,7 +3,7 @@ use crate::Error;
 use std::ops::Range;
 
 /// Metadata about a chain of [PartCell::Box]s.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Chain<T> {
     color: T,
     len: usize,

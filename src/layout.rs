@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 /// An item in a number grid.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Default)]
 pub struct Item<T> {
     pub color: T,
     pub len: usize,
@@ -18,6 +19,7 @@ impl<T> Item<T> {
 
 /// A layout composed of two number grids.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Default)]
 pub struct Layout<T> {
     pub cols: Vec<Vec<Item<T>>>,
     pub rows: Vec<Vec<Item<T>>>,
