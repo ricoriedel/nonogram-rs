@@ -66,27 +66,32 @@ impl<T> Nonogram<T> {
     }
 }
 
-impl<T: Copy> From<&Vec<Vec<Cell<T>>>> for Nonogram<T> {
-    fn from(value: &Vec<Vec<Cell<T>>>) -> Self {
+impl<T: Copy> TryFrom<Vec<Vec<Cell<T>>>> for Nonogram<T> {
+    type Error = ();
+
+    fn try_from(value: Vec<Vec<Cell<T>>>) -> Result<Self, Self::Error> {
         let row_len = value.len();
         let col_len = value.iter()
             .map(Vec::len)
-            .max()
+            .next()
             .unwrap_or(0);
 
         let mut nonogram = Nonogram::new(col_len, row_len);
 
         for row in 0..row_len {
+            if value[row].len() != col_len {
+                return Err(());
+            }
             for col in 0..col_len {
                 nonogram[(col, row)] = value[row][col];
             }
         }
-        nonogram
+        Ok(nonogram)
     }
 }
 
-impl<T: Copy> From<&Nonogram<T>> for Vec<Vec<Cell<T>>> {
-    fn from(nonogram: &Nonogram<T>) -> Self {
+impl<T: Copy> From<Nonogram<T>> for Vec<Vec<Cell<T>>> {
+    fn from(nonogram: Nonogram<T>) -> Self {
         let mut rows: Vec<Vec<Cell<T>>> = Vec::new();
 
         for row_i in 0..nonogram.rows() {
@@ -161,5 +166,48 @@ mod test {
         let n: Nonogram<()> = Nonogram::new(9, 5);
 
         n[(0, 5)];
+    }
+
+    #[test]
+    fn vec_from_nonogram() {
+        let mut nonogram = Nonogram::new(2, 3);
+        nonogram[(0, 0)] = Cell::Space;
+        nonogram[(0, 1)] = Cell::Box { color: 3 };
+        nonogram[(0, 2)] = Cell::Space;
+        nonogram[(1, 0)] = Cell::Box { color: 4 };
+        nonogram[(1, 1)] = Cell::Box { color: 4 };
+        nonogram[(1, 2)] = Cell::Space;
+
+        let vec: Vec<Vec<Cell<i32>>> = nonogram.into();
+
+        assert_eq!(3, vec.len());
+        assert_eq!(2, vec[0].len());
+        assert_eq!(2, vec[0].len());
+        assert_eq!(2, vec[0].len());
+        assert!(matches!(vec[0][0], Cell::Space));
+        assert!(matches!(vec[1][0], Cell::Box { color: 3 }));
+        assert!(matches!(vec[2][0], Cell::Space));
+        assert!(matches!(vec[0][1], Cell::Box { color: 4 }));
+        assert!(matches!(vec[1][1], Cell::Box { color: 4 }));
+        assert!(matches!(vec[2][1], Cell::Space));
+    }
+
+    #[test]
+    fn nonogram_from_vec() {
+        let vec = vec![
+            vec![Cell::Box { color: 3 }, Cell::Space, Cell::Space],
+            vec![Cell::Box { color: 2 }, Cell::Box { color: 5 }, Cell::Space]
+        ];
+
+        let nonogram: Nonogram<i32> = vec.try_into().unwrap();
+
+        assert_eq!(3, nonogram.cols());
+        assert_eq!(2, nonogram.rows());
+        assert!(matches!(nonogram[(0, 0)], Cell::Box { color: 3 }));
+        assert!(matches!(nonogram[(1, 0)], Cell::Space));
+        assert!(matches!(nonogram[(2, 0)], Cell::Space));
+        assert!(matches!(nonogram[(0, 1)], Cell::Box { color: 2 }));
+        assert!(matches!(nonogram[(1, 1)], Cell::Box { color: 5 }));
+        assert!(matches!(nonogram[(2, 1)], Cell::Space));
     }
 }

@@ -1,6 +1,6 @@
 use crate::Error;
 
-/// Cancellation reason.
+/// The error type for cancelling.
 #[derive(Default)]
 pub struct Cancelled;
 
@@ -19,6 +19,24 @@ impl Token for () {
 
 impl From<Cancelled> for Error {
     fn from(_: Cancelled) -> Self {
-        Error::Canceled
+        Error::Cancelled
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn check_tuple() {
+        assert!(matches!(().check(), Ok(())));
+    }
+
+    #[test]
+    fn error_from_cancelled() {
+        let cancelled = Cancelled::default();
+        let err: Error = cancelled.into();
+
+        assert!(matches!(err, Error::Cancelled));
     }
 }

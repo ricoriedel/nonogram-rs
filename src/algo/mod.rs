@@ -76,7 +76,7 @@ impl<T: Copy + PartialEq> Branch<T> {
                         }
                     }
                 },
-                Err(Error::Canceled) => return Err(Error::Canceled),
+                Err(Error::Cancelled) => return Err(Error::Cancelled),
                 Err(Error::Invalid) => (),
             }
         }
@@ -90,6 +90,7 @@ impl<T: Copy + PartialEq> Branch<T> {
             self.cols.write_to(&mut self.rows);
             self.rows.update()?;
             self.rows.write_to(&mut self.cols);
+
             token.check()?;
         }
         Ok(())
@@ -111,8 +112,18 @@ impl<T: Copy + PartialEq> Branch<T> {
 
 #[cfg(test)]
 mod test {
+    use crate::Cancelled;
     use super::*;
     use crate::Cell::*;
+
+    #[derive(Default)]
+    struct Cancel;
+
+    impl Token for Cancel {
+        fn check(&self) -> Result<(), Cancelled> {
+            Err(Cancelled::default())
+        }
+    }
 
     #[test]
     fn branch_solve() {
@@ -167,5 +178,19 @@ mod test {
         let branch = Branch::build(&cols, &cols);
 
         assert!(branch.solve(()).is_ok());
+    }
+
+    #[test]
+    fn branch_solve_cancel() {
+        let data = vec![
+            vec![Item::new('a', 1)],
+            vec![Item::new('a', 1)],
+            vec![Item::new('a', 1)],
+            vec![Item::new('a', 1)],
+            vec![Item::new('a', 1)],
+        ];
+        let branch = Branch::build(&data, &data);
+
+        assert!(matches!(branch.solve(Cancel::default()), Err(Error::Cancelled)));
     }
 }

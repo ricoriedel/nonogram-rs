@@ -18,7 +18,7 @@ pub enum Error {
     /// The supplied data doesn't result in a valid nonogram.
     Invalid,
     /// The operation has been cancelled.
-    Canceled
+    Cancelled
 }
 
 /// Solves a nonogram.

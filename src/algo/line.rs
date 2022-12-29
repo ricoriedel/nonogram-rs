@@ -206,7 +206,7 @@ mod test {
 
     #[test]
     fn line_len() {
-        assert!(5, Line::build(&Vec::new(), 5).len());
+        assert_eq!(5, Line::<()>::build(&Vec::new(), 5).len());
     }
 
     #[test]
