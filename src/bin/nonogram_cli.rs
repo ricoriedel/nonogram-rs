@@ -21,12 +21,10 @@ enum Command {
     Show
 }
 
-const BAD_LAYOUT: &str = "Bad layout or json.";
-const BAD_NONOGRAM: &str = "Bad nonogram or json.";
 const INVALID_LAYOUT: &str = "Invalid layout.";
 const INVALID_COLOR: &str = "Nonogram contains invalid colors.";
 
-fn main() -> Result<(), &'static str> {
+fn main() -> Result<(), String> {
     let args = Args::parse();
 
     match args.command {
@@ -35,9 +33,9 @@ fn main() -> Result<(), &'static str> {
     }
 }
 
-fn solve() -> Result<(), &'static str> {
-    let layout: Layout<char> = serde_json::from_reader(stdin()).map_err(|_| BAD_LAYOUT)?;
-    let nonogram = layout.solve(()).map_err(|_| INVALID_LAYOUT)?;
+fn solve() -> Result<(), String> {
+    let layout: Layout<char> = serde_json::from_reader(stdin()).map_err(|e| e.to_string())?;
+    let nonogram = layout.solve(()).map_err(|_| INVALID_LAYOUT.to_string())?;
 
     serde_json::to_writer(stdout(),  &nonogram).unwrap();
 
@@ -47,8 +45,8 @@ fn solve() -> Result<(), &'static str> {
     Ok(())
 }
 
-fn show() -> Result<(), &'static str> {
-    let nonogram: Nonogram<char> = serde_json::from_reader(stdin()).map_err(|_| BAD_NONOGRAM)?;
+fn show() -> Result<(), String> {
+    let nonogram: Nonogram<char> = serde_json::from_reader(stdin()).map_err(|e| e.to_string())?;
 
     for row in 0..nonogram.rows() {
         for col in 0..nonogram.cols() {
@@ -71,7 +69,7 @@ fn show() -> Result<(), &'static str> {
     Ok(())
 }
 
-fn map_color(color: char) -> Result<Color, &'static str> {
+fn map_color(color: char) -> Result<Color, String> {
     match color {
         '!' => Ok(Color::Reset),
         '0' => Ok(Color::Black),
@@ -90,6 +88,6 @@ fn map_color(color: char) -> Result<Color, &'static str> {
         'b' => Ok(Color::DarkBlue),
         'm' => Ok(Color::DarkMagenta),
         'c' => Ok(Color::DarkCyan),
-        _ => Err(INVALID_COLOR)
+        _ => Err(INVALID_COLOR.to_string())
     }
 }
