@@ -63,6 +63,13 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// Updates the start of a the chain.
+    ///
+    /// Parameters:
+    /// * `line`: The line on which this chain is located.
+    /// * `end`: The end of the previous chain.
+    /// * `same_color`: Whether the last chain has the same color.
+    ///
+    /// Returns the value of [Self::prev_start_border].
     pub fn update_start(
         &mut self,
         line: &Vec<PartCell<T>>,
@@ -76,7 +83,7 @@ impl<T: Copy + PartialEq> Chain<T> {
         Ok(self.prev_start_border(same_color))
     }
 
-    /// Updates the end of a the chain.
+    /// Mirror of [Chain::update_start].
     pub fn update_end(
         &mut self,
         line: &Vec<PartCell<T>>,
