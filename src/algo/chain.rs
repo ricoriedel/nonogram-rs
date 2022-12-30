@@ -230,6 +230,109 @@ mod test {
     }
 
     #[test]
+    fn chain_known_cells() {
+        assert_eq!(4..6, Chain::new((), 4, 2, 8).known_cells());
+    }
+
+    #[test]
+    fn chain_solved() {
+        assert!(Chain::new((), 3, 6, 9).solved());
+        assert!(!Chain::new((), 4, 2, 7).solved());
+    }
+
+    #[test]
+    fn chain_update_start_check_by_box_at_end() {
+        let line = vec![
+            Empty,
+            Empty,
+            Box { color: 1 },
+            Empty,
+            Box { color: 1 },
+        ];
+        let mut c = Chain::new(1, 1, 0, line.len());
+
+        c.update_start(&line, 3).unwrap();
+
+        assert_eq!(2, c.start());
+    }
+
+    #[test]
+    fn chain_update_start_check_by_adjacent() {
+        let line = vec![
+            Box { color: 1 },
+            Box { color: 1 },
+            Empty,
+            Empty,
+        ];
+        let mut c = Chain::new(1, 1, 1, line.len());
+
+        c.update_start(&line, line.len()).unwrap();
+
+        assert_eq!(3, c.start());
+    }
+
+    #[test]
+    fn chain_update_start_check_by_gabs() {
+        let line = vec![
+            Space,
+            Space,
+            Empty,
+            Empty,
+        ];
+        let mut c = Chain::new(1, 1, 0, line.len());
+
+        c.update_start(&line, line.len()).unwrap();
+
+        assert_eq!(2, c.start());
+    }
+
+    #[test]
+    fn chain_update_end_check_by_box_at_start() {
+        let line = vec![
+            Box { color: 1 },
+            Empty,
+            Box { color: 1 },
+            Empty,
+            Empty,
+        ];
+        let mut c = Chain::new(1, 1, 0, line.len());
+
+        c.update_end(&line, 2).unwrap();
+
+        assert_eq!(3, c.end());
+    }
+
+    #[test]
+    fn chain_update_end_check_by_adjacent() {
+        let line = vec![
+            Empty,
+            Empty,
+            Box { color: 1 },
+            Box { color: 1 },
+        ];
+        let mut c = Chain::new(1, 1, 0, 2);
+
+        c.update_end(&line, line.len()).unwrap();
+
+        assert_eq!(1, c.end());
+    }
+
+    #[test]
+    fn chain_update_end_check_by_gabs() {
+        let line = vec![
+            Empty,
+            Empty,
+            Space,
+            Space,
+        ];
+        let mut c = Chain::new(1, 1, 0, line.len());
+
+        c.update_end(&line, line.len()).unwrap();
+
+        assert_eq!(2, c.end());
+    }
+
+    #[test]
     fn chain_min_prev_start_same_color_false() {
         let c = Chain::new(0, 2, 3, 0);
 
@@ -255,17 +358,6 @@ mod test {
         let c = Chain::new(0, 4, 0, 8);
 
         assert_eq!(3, c.max_prev_end(true));
-    }
-
-    #[test]
-    fn chain_known_cells() {
-        assert_eq!(4..6, Chain::new((), 4, 2, 8).known_cells());
-    }
-
-    #[test]
-    fn chain_solved() {
-        assert!(Chain::new((), 3, 6, 9).solved());
-        assert!(!Chain::new((), 4, 2, 7).solved());
     }
 
     #[test]

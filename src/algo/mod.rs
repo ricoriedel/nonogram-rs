@@ -140,16 +140,8 @@ impl<T: Copy + PartialEq + Send> Branch<T> {
 mod test {
     use super::*;
     use crate::Cell::*;
-    use crate::{Status, Solution, Cancelled};
-
-    #[derive(Default)]
-    struct Cancel;
-
-    impl Token for Cancel {
-        fn check(&self) -> Result<(), Cancelled> {
-            Err(Cancelled::default())
-        }
-    }
+    use crate::{Status, Solution};
+    use crate::cancel::Cancel;
 
     #[test]
     fn branch_solve() {

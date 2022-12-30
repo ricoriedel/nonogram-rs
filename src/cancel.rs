@@ -16,6 +16,17 @@ impl Token for () {
 }
 
 #[cfg(test)]
+#[derive(Default)]
+pub struct Cancel;
+
+#[cfg(test)]
+impl Token for Cancel {
+    fn check(&self) -> Result<(), Cancelled> {
+        Err(Cancelled::default())
+    }
+}
+
+#[cfg(test)]
 mod test {
     use super::*;
 

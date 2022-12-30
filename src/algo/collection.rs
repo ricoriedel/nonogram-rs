@@ -46,3 +46,76 @@ impl<T: PartialEq + Send, TToken: Token> From<Collection<T, TToken>> for Solutio
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::cancel::Cancel;
+    use super::*;
+
+    #[test]
+    fn collection_push() {
+        let collection = Collection::new(usize::MAX, ());
+        collection.push(Nonogram::new(3, 3));
+        collection.push(Nonogram::new(3, 3));
+        collection.push(Nonogram::new(3, 3));
+
+        let solution: Solution<i32> = collection.into();
+
+        assert_eq!(3, solution.collection.len());
+    }
+
+    #[test]
+    fn collection_status_complete() {
+        let collection = Collection::new(usize::MAX, ());
+        let solution: Solution<i32> = collection.into();
+
+        assert!(matches!(solution.status, Status::Complete));
+    }
+
+    #[test]
+    fn collection_status_full() {
+        let collection = Collection::new(3, ());
+        collection.push(Nonogram::new(3, 3));
+        collection.push(Nonogram::new(3, 3));
+        collection.push(Nonogram::new(3, 3));
+
+        let solution: Solution<i32> = collection.into();
+
+        assert!(matches!(solution.status, Status::Full));
+    }
+
+    #[test]
+    fn collection_status_canceled() {
+        let collection = Collection::new(3, Cancel::default());
+        let solution: Solution<i32> = collection.into();
+
+        assert!(matches!(solution.status, Status::Cancelled));
+    }
+
+    #[test]
+    fn collection_check_limit_not_reached() {
+        let collection: Collection<(), ()> = Collection::new(5, ());
+        collection.push(Nonogram::new(3, 3));
+        collection.push(Nonogram::new(3, 3));
+        collection.push(Nonogram::new(3, 3));
+
+        assert!(matches!(collection.check(), Ok(())));
+    }
+
+    #[test]
+    fn collection_check_limit_reached() {
+        let collection: Collection<(), ()> = Collection::new(3, ());
+        collection.push(Nonogram::new(3, 3));
+        collection.push(Nonogram::new(3, 3));
+        collection.push(Nonogram::new(3, 3));
+
+        assert!(matches!(collection.check(), Err(Error::Full)));
+    }
+
+    #[test]
+    fn collection_check_cancelled() {
+        let collection: Collection<(), Cancel> = Collection::new(3, Cancel::default());
+
+        assert!(matches!(collection.check(), Err(Error::Cancelled)));
+    }
+}
