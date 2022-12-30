@@ -36,6 +36,10 @@ impl<T: Copy + PartialEq + Send + Sync> Layout<T> {
     }
 
     /// Tries to solve a layout.
+    ///
+    /// # Parameters
+    /// * `limit`: The maximum amount of nonograms to include in the solution.
+    /// * `token`: Some cancellation token.
     pub fn solve(self, limit: usize, token: impl Token) -> Solution<T> {
         let mut collection = Collection::new(limit, token);
 

@@ -1,6 +1,6 @@
 use crate::algo::chain::Chain;
-use crate::algo::PartCell;
-use crate::{Error, Item};
+use crate::algo::{Error, PartCell};
+use crate::Item;
 use std::ops::Range;
 
 /// A line of a nonogram including metadata.

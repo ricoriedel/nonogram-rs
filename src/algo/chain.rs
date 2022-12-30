@@ -1,5 +1,4 @@
-use crate::algo::PartCell;
-use crate::Error;
+use crate::algo::{Error, PartCell};
 use std::ops::Range;
 
 /// Metadata about a chain of [PartCell::Box]s.

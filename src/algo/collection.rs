@@ -1,5 +1,6 @@
 use std::sync::Mutex;
-use crate::{Error, Nonogram, Solution, Token};
+use crate::{Nonogram, Solution, Status, Token};
+use crate::algo::Error;
 
 pub struct Collection<TValue, TToken> {
     collection: Mutex<Vec<Nonogram<TValue>>>,
@@ -19,10 +20,8 @@ impl<TValue: PartialEq, TToken: Token> Collection<TValue, TToken> {
     pub fn push(&self, nonogram: Nonogram<TValue>) {
         self.collection.lock().unwrap().push(nonogram);
     }
-}
 
-impl<T: Send, TToken: Token> Token for Collection<T, TToken> {
-    fn check(&self) -> Result<(), Error> {
+    pub fn check(&self) -> Result<(), Error> {
         self.token.check()?;
 
         if self.collection.lock().unwrap().len() >= self.limit {
@@ -33,11 +32,17 @@ impl<T: Send, TToken: Token> Token for Collection<T, TToken> {
     }
 }
 
-impl<T: Send, TToken: Token> From<Collection<T, TToken>> for Solution<T> {
+impl<T: PartialEq + Send, TToken: Token> From<Collection<T, TToken>> for Solution<T> {
     fn from(collection: Collection<T, TToken>) -> Self {
+        let status = match collection.check() {
+            Ok(_) => Status::Complete,
+            Err(Error::Full) => Status::Full,
+            Err(Error::Cancelled) => Status::Cancelled,
+            _ => panic!()
+        };
         Solution {
-            error: collection.check().err(),
             collection: collection.collection.into_inner().unwrap(),
+            status,
         }
     }
 }

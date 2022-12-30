@@ -1,6 +1,6 @@
 use crate::algo::line::Line;
-use crate::algo::PartCell;
-use crate::{Error, Item, Nonogram};
+use crate::algo::{Error, PartCell};
+use crate::{Item, Nonogram};
 
 /// A group of lines including metadata.
 #[derive(Clone)]

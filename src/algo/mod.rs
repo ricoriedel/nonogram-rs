@@ -1,13 +1,12 @@
-use rayon::join;
-use crate::algo::grid::Grid;
-use crate::{Cell, Error, Item, Token};
+use crate::{Cancelled, Cell, Item, Token};
 use collection::Collection;
+use grid::Grid;
+use rayon::join;
 
 pub mod chain;
 pub mod line;
 pub mod collection;
-
-mod grid;
+pub mod grid;
 
 /// A [super::Cell] that might not has a value yet.
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -18,6 +17,23 @@ pub enum PartCell<T> {
     Box { color: T },
     /// A space ("x") between chains.
     Space,
+}
+
+/// The reason a nonogram could not be solved.
+#[derive(Debug)]
+pub enum Error {
+    /// The supplied data doesn't result in a valid nonogram.
+    Invalid,
+    /// The collection was full.
+    Full,
+    /// The operation has been cancelled.
+    Cancelled,
+}
+
+impl From<Cancelled> for Error {
+    fn from(_: Cancelled) -> Self {
+        Error::Cancelled
+    }
 }
 
 impl<T: PartialEq> PartialEq<T> for PartCell<T> {
@@ -73,7 +89,7 @@ impl<T: Copy + PartialEq + Send> Branch<T> {
 
                     join(
                         || a.solve(collection),
-                        || b.solve(collection)
+                        || b.solve(collection),
                     );
                 }
             }
@@ -82,7 +98,7 @@ impl<T: Copy + PartialEq + Send> Branch<T> {
     }
 
     /// Tries to solve a branch without forking.
-    fn try_solve(&mut self, token: &impl Token) -> Result<(), Error> {
+    fn try_solve<TToken: Token>(&mut self, token: &Collection<T, TToken>) -> Result<(), Error> {
         while self.cols.flagged() {
             self.cols.update()?;
             self.cols.write_to(&mut self.rows)?;
@@ -124,14 +140,14 @@ impl<T: Copy + PartialEq + Send> Branch<T> {
 mod test {
     use super::*;
     use crate::Cell::*;
-    use crate::Solution;
+    use crate::{Status, Solution, Cancelled};
 
     #[derive(Default)]
     struct Cancel;
 
     impl Token for Cancel {
-        fn check(&self) -> Result<(), Error> {
-            Err(Error::Cancelled)
+        fn check(&self) -> Result<(), Cancelled> {
+            Err(Cancelled::default())
         }
     }
 
@@ -214,6 +230,6 @@ mod test {
 
         let solution: Solution<char> = collection.into();
 
-        assert!(matches!(solution.error, Some(Error::Cancelled)));
+        assert!(matches!(solution.status, Status::Cancelled));
     }
 }
