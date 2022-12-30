@@ -42,15 +42,15 @@ cat layout.json | ./nonogram-cli solve | ./nonogram-cli show
 }
 ```
 
-#### Example nonogram
+#### Example result
 ```json
-{
-  "rows":[
+[
+  [
     [{"Box":{"color":"y"}}, {"Box":{"color":"r"}}, "Space"],
     ["Space",               {"Box":{"color":"r"}}, "Space"],
     [{"Box":{"color":"y"}}, {"Box":{"color":"r"}}, {"Box":{"color":"r"}}]
   ]
-}
+]
 ```
 
 #### Result
