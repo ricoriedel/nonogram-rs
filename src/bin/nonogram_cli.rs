@@ -1,3 +1,4 @@
+use std::fmt::{Debug, Formatter};
 use nonogram_rs::*;
 use std::io::{stdin, stdout, Write};
 
@@ -15,16 +16,45 @@ struct Args {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Solve a nonogram and output the result
+    /// Solve a nonogram from stdin
     Solve,
-    /// Print a solved nonogram to the terminal
+    /// Print all found nonograms
     Show,
 }
 
-const INVALID_LAYOUT: &str = "Invalid layout.";
-const INVALID_COLOR: &str = "Nonogram contains invalid colors.";
+enum CliError {
+    InvalidColor { color: char },
+    ParsingError { error: serde_json::Error },
+    IoError { error: std::io::Error },
+}
 
-fn main() -> Result<(), String> {
+impl From<serde_json::Error> for CliError {
+    fn from(error: serde_json::Error) -> Self {
+        Self::ParsingError {
+            error
+        }
+    }
+}
+
+impl From<std::io::Error> for CliError {
+    fn from(error: std::io::Error) -> Self {
+        Self::IoError {
+            error
+        }
+    }
+}
+
+impl Debug for CliError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CliError::InvalidColor { color } => write!(f, "invalid color: \"{}\"", color),
+            CliError::ParsingError { error } => write!(f, "{}", error),
+            CliError::IoError { error } => write!(f, "{}", error),
+        }
+    }
+}
+
+fn main() -> Result<(), CliError> {
     let args = Args::parse();
 
     match args.command {
@@ -33,53 +63,64 @@ fn main() -> Result<(), String> {
     }
 }
 
-fn solve() -> Result<(), String> {
-    let layout: Layout<char> = serde_json::from_reader(stdin()).map_err(|e| e.to_string())?;
+fn solve() -> Result<(), CliError> {
+    let layout: Layout<char> = serde_json::from_reader(stdin())?;
     let collection = layout.solve(usize::MAX, ()).collection;
 
-    if collection.is_empty() {
-        return Err(INVALID_LAYOUT.to_string());
-    }
-    serde_json::to_writer(stdout(), &collection).unwrap();
+    serde_json::to_writer(stdout(), &collection)?;
 
-    // Sometimes flush does not suffice.
-    stdout().execute(Print("\n")).unwrap();
+    stdout().execute(Print("\n"))?;
 
     Ok(())
 }
 
-fn show() -> Result<(), String> {
-    let collection: Vec<Nonogram<char>> = serde_json::from_reader(stdin()).map_err(|e| e.to_string())?;
+fn show() -> Result<(), CliError> {
+    let collection: Vec<Nonogram<char>> = serde_json::from_reader(stdin())?;
 
     for nonogram in collection {
         print_nonogram(nonogram)?;
     }
-    stdout().flush().unwrap();
+    stdout().flush()?;
 
     Ok(())
 }
 
-fn print_nonogram(nonogram: Nonogram<char>) -> Result<(), String> {
+fn print_nonogram(nonogram: Nonogram<char>) -> Result<(), CliError> {
+    let width = nonogram.cols() * 2;
+    let meta_width = width.saturating_sub(9);
+
+    let cols = format!("Columns: {:>meta_width$}\n", nonogram.cols());
+    let rows = format!("Rows:    {:>meta_width$}\n", nonogram.cols());
+
+    stdout()
+        .queue(Print("=".repeat(width)))?
+        .queue(Print("\n"))?
+        .queue(Print(cols))?
+        .queue(Print(rows))?
+        .queue(Print("-".repeat(width)))?
+        .queue(Print("\n"))?;
+
     for row in 0..nonogram.rows() {
         for col in 0..nonogram.cols() {
             match nonogram[(col, row)] {
                 Cell::Box { color } => {
                     let c = map_color(color)?;
 
-                    stdout().queue(SetForegroundColor(c)).unwrap();
-                    stdout().queue(Print("██")).unwrap();
+                    stdout().queue(SetForegroundColor(c))?;
+                    stdout().queue(Print("██"))?;
                 }
                 Cell::Space => {
-                    stdout().queue(Print("  ")).unwrap();
+                    stdout().queue(Print("  "))?;
                 }
             }
         }
-        stdout().queue(Print("\n")).unwrap();
+        stdout().queue(SetForegroundColor(Color::Reset))?;
+        stdout().queue(Print("\n"))?;
     }
     Ok(())
 }
 
-fn map_color(color: char) -> Result<Color, String> {
+fn map_color(color: char) -> Result<Color, CliError> {
     match color {
         '!' => Ok(Color::Reset),
         '0' => Ok(Color::Black),
@@ -98,6 +139,6 @@ fn map_color(color: char) -> Result<Color, String> {
         'b' => Ok(Color::DarkBlue),
         'm' => Ok(Color::DarkMagenta),
         'c' => Ok(Color::DarkCyan),
-        _ => Err(INVALID_COLOR.to_string()),
+        color => Err(CliError::InvalidColor { color }),
     }
 }
