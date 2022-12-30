@@ -16,9 +16,7 @@ impl<TValue: PartialEq, TToken: Token> Collection<TValue, TToken> {
     }
 
     pub fn push(&mut self, nonogram: Nonogram<TValue>) {
-        if !self.collection.contains(&nonogram) {
-            self.collection.push(nonogram);
-        }
+        self.collection.push(nonogram);
     }
 }
 

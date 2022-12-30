@@ -85,9 +85,9 @@ impl<T: Copy + PartialEq> Branch<T> {
     fn try_solve(&mut self, token: &impl Token) -> Result<(), Error> {
         while self.cols.flagged() {
             self.cols.update()?;
-            self.cols.write_to(&mut self.rows);
+            self.cols.write_to(&mut self.rows)?;
             self.rows.update()?;
-            self.rows.write_to(&mut self.cols);
+            self.rows.write_to(&mut self.cols)?;
 
             token.check()?;
         }
@@ -99,10 +99,10 @@ impl<T: Copy + PartialEq> Branch<T> {
     fn fork(mut self, (col, row, color): (usize, usize, T)) -> (Self, Self) {
         let mut fork = self.clone();
 
-        self.cols.set(col, row, PartCell::Box { color });
-        self.rows.set(row, col, PartCell::Box { color });
-        fork.cols.set(col, row, PartCell::Space);
-        fork.rows.set(row, col, PartCell::Space);
+        self.cols.set(col, row, PartCell::Box { color }).unwrap();
+        self.rows.set(row, col, PartCell::Box { color }).unwrap();
+        fork.cols.set(col, row, PartCell::Space).unwrap();
+        fork.rows.set(row, col, PartCell::Space).unwrap();
 
         (self, fork)
     }

@@ -41,8 +41,8 @@ impl<T: Copy + PartialEq> Grid<T> {
     ///
     /// Flags the grid, if it has been altered.
     /// See [Grid::flagged].
-    pub fn set(&mut self, line: usize, cell: usize, value: PartCell<T>) {
-        self.lines[line].set(cell, value);
+    pub fn set(&mut self, line: usize, cell: usize, value: PartCell<T>) -> Result<(), Error> {
+        self.lines[line].set(cell, value)
     }
 
     /// The length of the grid and lines.
@@ -55,12 +55,13 @@ impl<T: Copy + PartialEq> Grid<T> {
     }
 
     /// Copies all values to the **intersecting** grid.
-    pub fn write_to(&self, other: &mut Grid<T>) {
+    pub fn write_to(&self, other: &mut Grid<T>) -> Result<(), Error>{
         for line in 0..self.lines.len() {
             for cell in 0..self.lines[line].len() {
-                other.set(cell, line, self.get(line, cell))
+                other.set(cell, line, self.get(line, cell))?;
             }
         }
+        Ok(())
     }
 
     /// Finds an unsolved chain.
@@ -105,7 +106,7 @@ mod test {
         let cols = vec![Vec::new(), Vec::new(), Vec::new(), Vec::new()];
         let mut grid = Grid::build(&cols, 6);
 
-        grid.set(1, 5, PartCell::Box { color: 2 });
+        grid.set(1, 5, PartCell::Box { color: 2 }).unwrap();
 
         assert!(matches!(grid.get(1, 5), PartCell::Box { color: 2 }));
     }
@@ -115,7 +116,7 @@ mod test {
         let cols = vec![Vec::new(), Vec::new(), Vec::new(), Vec::new()];
         let mut grid = Grid::build(&cols, 6);
 
-        grid.set(2, 4, PartCell::Box { color: 4 });
+        grid.set(2, 4, PartCell::Box { color: 4 }).unwrap();
 
         assert!(grid.flagged());
     }
@@ -159,7 +160,7 @@ mod test {
         let mut rows = Grid::build(&rows, 2);
 
         cols.update().unwrap();
-        cols.write_to(&mut rows);
+        cols.write_to(&mut rows).unwrap();
 
         assert!(matches!(rows.get(0, 0), PartCell::Box { color: 6 }));
         assert!(matches!(rows.get(0, 1), PartCell::Space));
@@ -172,7 +173,7 @@ mod test {
         let cols = vec![vec![Item::new(5, 1)], vec![]];
         let mut grid = Grid::build(&cols, 3);
 
-        grid.set(0, 0, PartCell::Space);
+        grid.set(0, 0, PartCell::Space).unwrap();
         grid.update().unwrap();
 
         assert!(matches!(grid.find_unsolved(), Some((0, 1, 5))));
@@ -183,10 +184,10 @@ mod test {
         let cols = vec![vec![Item::new(5, 1)], vec![]];
         let mut grid = Grid::build(&cols, 2);
 
-        grid.set(0, 0, PartCell::Space);
-        grid.set(0, 1, PartCell::Box { color: 5 });
-        grid.set(1, 0, PartCell::Space);
-        grid.set(1, 1, PartCell::Space);
+        grid.set(0, 0, PartCell::Space).unwrap();
+        grid.set(0, 1, PartCell::Box { color: 5 }).unwrap();
+        grid.set(1, 0, PartCell::Space).unwrap();
+        grid.set(1, 1, PartCell::Space).unwrap();
         grid.update().unwrap();
 
         assert!(matches!(grid.find_unsolved(), None));
