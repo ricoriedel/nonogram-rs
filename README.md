@@ -2,11 +2,11 @@
 A fast and lightweight nonogram solving library.
 
 Features:
-* Solving regular nonograms
-* Solving colored nonograms
-* Arbitrary color type
-* De/serializing a layout (requires `serde` feature)
-* De/serializing a nonogram (requires `serde` feature)
+* Solving regular puzzles
+* Solving colored puzzles (with arbitrary color type)
+* Finding all solutions to a puzzle
+* Multithreading using [rayon](https://github.com/rayon-rs/rayon)
+* De/serializing using [serde](https://github.com/serde-rs/serde) (requires `serde` feature)
 
 Examples of how to use this library can be found in the `tests/` directory.
 

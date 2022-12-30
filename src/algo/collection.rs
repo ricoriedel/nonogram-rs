@@ -32,7 +32,7 @@ impl<TValue: PartialEq, TToken: Token> Collection<TValue, TToken> {
     }
 }
 
-impl<T: PartialEq + Send, TToken: Token> From<Collection<T, TToken>> for Solution<T> {
+impl<T: Copy + PartialEq + Send, TToken: Token> From<Collection<T, TToken>> for Solution<T> {
     fn from(collection: Collection<T, TToken>) -> Self {
         let status = match collection.check() {
             Ok(_) => Status::Complete,

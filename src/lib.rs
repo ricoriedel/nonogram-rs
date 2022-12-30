@@ -3,14 +3,15 @@ mod cancel;
 mod layout;
 mod nonogram;
 
-#[cfg(feature = "serde")]
-mod serialize;
-
 pub use cancel::{Token, Cancelled};
 pub use layout::{Item, Layout};
 pub use nonogram::{Cell, Nonogram};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// The status when a [Solution] was created.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Status {
     /// The operation was completed.
     Complete,
@@ -21,7 +22,8 @@ pub enum Status {
 }
 
 /// A collection of all solutions to a [Layout].
-pub struct Solution<T> {
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Solution<T: Copy> {
     /// All found solutions to the [Layout].
     pub collection: Vec<Nonogram<T>>,
     /// The status when creating this [Solution].
