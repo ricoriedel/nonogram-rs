@@ -50,9 +50,12 @@ pub struct Branch<T> {
 
 impl<T: Copy + PartialEq + Send> Branch<T> {
     /// Constructs a new branch from a layout.
-    pub fn build(col_grid: &Vec<Vec<Item<T>>>, row_grid: &Vec<Vec<Item<T>>>) -> Self {
-        let cols = Grid::build(col_grid, row_grid.len());
-        let rows = Grid::build(row_grid, col_grid.len());
+    pub fn build(col_grid: Vec<Vec<Item<T>>>, row_grid: Vec<Vec<Item<T>>>) -> Self {
+        let col_count = col_grid.len();
+        let row_count = row_grid.len();
+
+        let cols = Grid::build(col_grid, row_count);
+        let rows = Grid::build(row_grid, col_count);
 
         Self { cols, rows }
     }
@@ -146,7 +149,7 @@ mod test {
         ];
         let mut collection = Collection::new(usize::MAX, ());
 
-        Branch::build(&cols, &rows).solve(&mut collection);
+        Branch::build(cols, rows).solve(&mut collection);
 
         let solution: Solution<char> = collection.into();
         let nonogram = solution.collection.first().unwrap();
@@ -171,7 +174,7 @@ mod test {
 
         let mut collection = Collection::new(usize::MAX, ());
 
-        Branch::build(&cols, &rows).solve(&mut collection);
+        Branch::build(cols, rows).solve(&mut collection);
 
         let solution: Solution<char> = collection.into();
 
@@ -189,7 +192,7 @@ mod test {
         ];
         let mut collection = Collection::new(usize::MAX, ());
 
-        Branch::build(&cols, &cols).solve(&mut collection);
+        Branch::build(cols.clone(), cols).solve(&mut collection);
 
         let solution: Solution<char> = collection.into();
 
@@ -207,7 +210,7 @@ mod test {
         ];
         let mut collection = Collection::new(usize::MAX, Cancel::default());
 
-        Branch::build(&data, &data).solve(&mut collection);
+        Branch::build(data.clone(), data).solve(&mut collection);
 
         let solution: Solution<char> = collection.into();
 
