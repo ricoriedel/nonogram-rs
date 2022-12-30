@@ -7,14 +7,14 @@ fn bench_res(c: &mut Criterion, name: &str) {
     let json = read_to_string(path).unwrap();
     let layout: Layout<char> = serde_json::from_str(&json).unwrap();
 
-    c.bench_function(name, |b| b.iter(|| layout.solve(()).unwrap()));
+    c.bench_function(name, |b| b.iter(|| layout.solve(usize::MAX, ())));
 
     let swapped_name = format!("{}-swapped", name);
     let swapped = Layout {
         cols: layout.rows,
         rows: layout.cols,
     };
-    c.bench_function(&swapped_name, |b| b.iter(|| swapped.solve(()).unwrap()));
+    c.bench_function(&swapped_name, |b| b.iter(|| swapped.solve(usize::MAX, ())));
 }
 
 fn apple(c: &mut Criterion) {

@@ -25,7 +25,7 @@ pub enum Cell<T> {
 ///
 /// let value = n[(0, 3)];
 /// ```
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Nonogram<T> {
     cols: usize,
     rows: usize,

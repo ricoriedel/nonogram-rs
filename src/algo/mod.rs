@@ -1,9 +1,12 @@
 use crate::algo::grid::Grid;
-use crate::{Cell, Error, Item, Nonogram, Token};
+use crate::{Cell, Error, Item, Token};
+use collection::Collection;
 
 pub mod chain;
-mod grid;
 pub mod line;
+pub mod collection;
+
+mod grid;
 
 /// A [super::Cell] that might not has a value yet.
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -55,27 +58,27 @@ impl<T: Copy + PartialEq> Branch<T> {
 
     /// Tries to find the solution to this branch.
     /// Fails if the layout is invalid.
-    pub fn solve(self, token: impl Token) -> Result<Nonogram<T>, Error> {
+    pub fn solve<TToken: Token>(self, collection: &mut Collection<T, TToken>) {
         // Emulates recursion because there are to many big variables for the stack.
 
         let mut branches = vec![self];
 
         while let Some(mut branch) = branches.pop() {
-            match branch.try_solve(&token) {
+            match branch.try_solve(collection) {
                 Ok(_) => match branch.find_unsolved() {
-                    None => return Ok(branch.cols.try_into().unwrap()),
+                    None => {
+                        collection.push(branch.cols.try_into().unwrap());
+                    }
                     Some(unsolved) => {
                         let (a, b) = branch.fork(unsolved);
 
                         branches.push(a);
                         branches.push(b);
                     }
-                },
-                Err(Error::Cancelled) => return Err(Error::Cancelled),
-                Err(Error::Invalid) => (),
+                }
+                Err(_) => (),
             }
         }
-        Err(Error::Invalid)
     }
 
     /// Tries to solve a branch without forking.
@@ -120,15 +123,15 @@ impl<T: Copy + PartialEq> Branch<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Cancelled;
     use crate::Cell::*;
+    use crate::Solution;
 
     #[derive(Default)]
     struct Cancel;
 
     impl Token for Cancel {
-        fn check(&self) -> Result<(), Cancelled> {
-            Err(Cancelled::default())
+        fn check(&self) -> Result<(), Error> {
+            Err(Error::Cancelled)
         }
     }
 
@@ -144,8 +147,12 @@ mod test {
             vec![Item::new('b', 3)],
             vec![Item::new('b', 1)],
         ];
-        let branch = Branch::build(&cols, &rows);
-        let nonogram = branch.solve(()).unwrap();
+        let mut collection = Collection::new(usize::MAX, ());
+
+        Branch::build(&cols, &rows).solve(&mut collection);
+
+        let solution: Solution<char> = collection.into();
+        let nonogram = solution.collection.first().unwrap();
 
         assert!(matches!(nonogram[(0, 0)], Box { color: 'a' }));
         assert!(matches!(nonogram[(1, 0)], Space));
@@ -164,9 +171,14 @@ mod test {
     fn branch_solve_invalid() {
         let cols = vec![vec![Item { color: 'a', len: 1 }]];
         let rows = vec![vec![Item { color: 'b', len: 1 }]];
-        let branch = Branch::build(&cols, &rows);
 
-        assert!(branch.solve(()).is_err());
+        let mut collection = Collection::new(usize::MAX, ());
+
+        Branch::build(&cols, &rows).solve(&mut collection);
+
+        let solution: Solution<char> = collection.into();
+
+        assert!(solution.collection.is_empty());
     }
 
     #[test]
@@ -178,9 +190,13 @@ mod test {
             vec![Item::new('a', 1)],
             vec![Item::new('a', 1)],
         ];
-        let branch = Branch::build(&cols, &cols);
+        let mut collection = Collection::new(usize::MAX, ());
 
-        assert!(branch.solve(()).is_ok());
+        Branch::build(&cols, &cols).solve(&mut collection);
+
+        let solution: Solution<char> = collection.into();
+
+        assert!(!solution.collection.is_empty());
     }
 
     #[test]
@@ -192,11 +208,12 @@ mod test {
             vec![Item::new('a', 1)],
             vec![Item::new('a', 1)],
         ];
-        let branch = Branch::build(&data, &data);
+        let mut collection = Collection::new(usize::MAX, Cancel::default());
 
-        assert!(matches!(
-            branch.solve(Cancel::default()),
-            Err(Error::Cancelled)
-        ));
+        Branch::build(&data, &data).solve(&mut collection);
+
+        let solution: Solution<char> = collection.into();
+
+        assert!(matches!(solution.error, Some(Error::Cancelled)));
     }
 }

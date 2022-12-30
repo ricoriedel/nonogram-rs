@@ -7,7 +7,7 @@ mod demo {
         let json = include_str!("../res/apple.json");
         let layout: Layout<char> = serde_json::from_str(json).unwrap();
 
-        assert!(layout.solve(()).is_ok());
+        assert_eq!(1, layout.solve(usize::MAX, ()).collection.len());
     }
 
     #[test]
@@ -15,7 +15,7 @@ mod demo {
         let json = include_str!("../res/apple-color.json");
         let layout: Layout<char> = serde_json::from_str(json).unwrap();
 
-        assert!(layout.solve(()).is_ok());
+        assert_eq!(3, layout.solve(usize::MAX, ()).collection.len());
     }
 
     #[test]
@@ -23,7 +23,7 @@ mod demo {
         let json = include_str!("../res/palm.json");
         let layout: Layout<char> = serde_json::from_str(json).unwrap();
 
-        assert!(layout.solve(()).is_ok());
+        assert_eq!(1, layout.solve(usize::MAX, ()).collection.len());
     }
 
     #[test]
@@ -31,7 +31,7 @@ mod demo {
         let json = include_str!("../res/palm-color.json");
         let layout: Layout<char> = serde_json::from_str(json).unwrap();
 
-        assert!(layout.solve(()).is_ok());
+        assert_eq!(2, layout.solve(usize::MAX, ()).collection.len());
     }
 
     #[test]
@@ -39,7 +39,7 @@ mod demo {
         let json = include_str!("../res/colors.json");
         let layout: Layout<char> = serde_json::from_str(json).unwrap();
 
-        assert!(layout.solve(()).is_ok());
+        assert_eq!(1, layout.solve(usize::MAX, ()).collection.len());
     }
 
     #[test]
@@ -47,6 +47,6 @@ mod demo {
         let json = include_str!("../res/flower.json");
         let layout: Layout<char> = serde_json::from_str(json).unwrap();
 
-        assert!(layout.solve(()).is_ok());
+        assert_eq!(1, layout.solve(usize::MAX, ()).collection.len());
     }
 }

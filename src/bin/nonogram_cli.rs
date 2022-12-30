@@ -35,9 +35,12 @@ fn main() -> Result<(), String> {
 
 fn solve() -> Result<(), String> {
     let layout: Layout<char> = serde_json::from_reader(stdin()).map_err(|e| e.to_string())?;
-    let nonogram = layout.solve(()).map_err(|_| INVALID_LAYOUT.to_string())?;
+    let collection = layout.solve(usize::MAX, ()).collection;
 
-    serde_json::to_writer(stdout(), &nonogram).unwrap();
+    if collection.is_empty() {
+        return Err(INVALID_LAYOUT.to_string());
+    }
+    serde_json::to_writer(stdout(), &collection).unwrap();
 
     // Sometimes flush does not suffice.
     stdout().execute(Print("\n")).unwrap();
@@ -46,8 +49,17 @@ fn solve() -> Result<(), String> {
 }
 
 fn show() -> Result<(), String> {
-    let nonogram: Nonogram<char> = serde_json::from_reader(stdin()).map_err(|e| e.to_string())?;
+    let collection: Vec<Nonogram<char>> = serde_json::from_reader(stdin()).map_err(|e| e.to_string())?;
 
+    for nonogram in collection {
+        print_nonogram(nonogram)?;
+    }
+    stdout().flush().unwrap();
+
+    Ok(())
+}
+
+fn print_nonogram(nonogram: Nonogram<char>) -> Result<(), String> {
     for row in 0..nonogram.rows() {
         for col in 0..nonogram.cols() {
             match nonogram[(col, row)] {
@@ -64,8 +76,6 @@ fn show() -> Result<(), String> {
         }
         stdout().queue(Print("\n")).unwrap();
     }
-    stdout().flush().unwrap();
-
     Ok(())
 }
 

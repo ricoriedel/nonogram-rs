@@ -1,4 +1,5 @@
-use crate::{Error, Nonogram, Token};
+use crate::{Solution, Token};
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -32,8 +33,8 @@ impl<T: Copy + PartialEq> Layout<T> {
     }
 
     /// Tries to solve a layout.
-    pub fn solve(&self, token: impl Token) -> Result<Nonogram<T>, Error> {
-        super::solve(&self.cols, &self.rows, token)
+    pub fn solve(&self, limit: usize, token: impl Token) -> Solution<T> {
+        super::solve(&self.cols, &self.rows, limit, token)
     }
 }
 
@@ -47,6 +48,6 @@ mod test {
         let rows = vec![vec![Item::new('a', 1)]];
         let layout = Layout::new(cols, rows);
 
-        assert!(layout.solve(()).is_ok());
+        assert_eq!(1, layout.solve(usize::MAX, ()).collection.len());
     }
 }
