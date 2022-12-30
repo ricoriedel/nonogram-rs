@@ -55,7 +55,7 @@ impl<T: Copy + PartialEq> Line<T> {
     pub fn set(&mut self, cell: usize, value: PartCell<T>) -> Result<(), Error> {
         if self.line[cell] != value {
             if !matches!(self.line[cell], PartCell::Empty) {
-                return Err(Error::Invalid)
+                return Err(Error::Invalid);
             }
             self.line[cell] = value;
             self.flagged = true;
@@ -88,12 +88,13 @@ impl<T: Copy + PartialEq> Line<T> {
             let index = position - 1;
 
             let (prev_start, same_color) = self.check_right(index);
-            let border = self.data[index].update_start(&self.line, prev_start, same_color)?;
 
-            if prev_start < border {
+            let min = self.update_start(index, prev_start, same_color)?;
+
+            if prev_start < min {
                 // Backtrack
 
-                self.data[position].set_start(border);
+                self.data[position].set_start(min);
 
                 position += 1;
             } else {
@@ -109,14 +110,15 @@ impl<T: Copy + PartialEq> Line<T> {
 
         while index < self.data.len() {
             let (prev_end, same_color) = self.check_left(index);
-            let border = self.data[index].update_end(&self.line, prev_end, same_color)?;
 
-            if prev_end > border {
+            let max = self.update_end(index, prev_end, same_color)?;
+
+            if prev_end > max {
                 // Backtrack
 
                 index -= 1;
 
-                self.data[index].set_end(border);
+                self.data[index].set_end(max);
             } else {
                 index += 1;
             }
@@ -150,28 +152,49 @@ impl<T: Copy + PartialEq> Line<T> {
         }
     }
 
+    /// Updates the start of a chain and returns [Chain::min_prev_start].
+    fn update_start(&mut self, index: usize, prev_start: usize, same_color: bool) -> Result<usize, Error> {
+        let chain = &mut self.data[index];
+
+        chain.update_start(&self.line, prev_start)?;
+
+        Ok(chain.min_prev_start(same_color))
+    }
+
+    /// Updates the end of a chain and returns [Chain::max_prev_end].
+    fn update_end(&mut self, index: usize, prev_end: usize, same_color: bool) -> Result<usize, Error> {
+        let chain = &mut self.data[index];
+
+        chain.update_end(&self.line, prev_end)?;
+
+        Ok(chain.max_prev_end(same_color))
+    }
+
     /// Writes all known boxes to the line.
     fn write_boxes(&mut self) {
         for chain in 0..self.data.len() {
-            self.fill(
-                self.data[chain].known_cells(),
-                PartCell::Box {
-                    color: self.data[chain].color(),
-                },
-            );
+            let range = self.data[chain].known_cells();
+            let color = self.data[chain].color();
+
+            let value = PartCell::Box { color };
+
+            self.fill(range, value);
         }
     }
 
     /// Writes all known spaces to the line.
     fn write_spaces(&mut self) {
-        let mut start = 0;
+        let mut prev_end = 0;
 
         for i in 0..self.data.len() {
-            let chain = self.data[i].clone();
-            self.fill(start..chain.start(), PartCell::Space);
-            start = chain.end();
+            let start = self.data[i].start();
+            let end = self.data[i].end();
+
+            self.fill(prev_end..start, PartCell::Space);
+
+            prev_end = end;
         }
-        self.fill(start..self.line.len(), PartCell::Space);
+        self.fill(prev_end..self.line.len(), PartCell::Space);
     }
 
     fn fill(&mut self, range: Range<usize>, value: PartCell<T>) {

@@ -55,9 +55,11 @@ impl<T: Copy + PartialEq> Grid<T> {
     }
 
     /// Copies all values to the **intersecting** grid.
-    pub fn write_to(&self, other: &mut Grid<T>) -> Result<(), Error>{
-        for line in 0..self.lines.len() {
-            for cell in 0..self.lines[line].len() {
+    pub fn write_to(&self, other: &mut Grid<T>) -> Result<(), Error> {
+        let (lines, cells) = self.len();
+
+        for line in 0..lines {
+            for cell in 0..cells {
                 other.set(cell, line, self.get(line, cell))?;
             }
         }
