@@ -428,6 +428,7 @@ dependencies = [
  "clap 4.0.32",
  "criterion",
  "crossterm",
+ "rayon",
  "serde",
  "serde_json",
 ]

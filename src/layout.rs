@@ -26,7 +26,7 @@ pub struct Layout<T> {
     pub rows: Vec<Vec<Item<T>>>,
 }
 
-impl<T: Copy + PartialEq> Layout<T> {
+impl<T: Copy + PartialEq + Send + Sync> Layout<T> {
     /// Creates a new layout.
     pub fn new(cols: Vec<Vec<Item<T>>>, rows: Vec<Vec<Item<T>>>) -> Self {
         Self { cols, rows }

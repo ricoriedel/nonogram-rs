@@ -1,3 +1,4 @@
+use rayon::join;
 use crate::algo::grid::Grid;
 use crate::{Cell, Error, Item, Token};
 use collection::Collection;
@@ -47,7 +48,7 @@ pub struct Branch<T> {
     rows: Grid<T>,
 }
 
-impl<T: Copy + PartialEq> Branch<T> {
+impl<T: Copy + PartialEq + Send> Branch<T> {
     /// Constructs a new branch from a layout.
     pub fn build(col_grid: &Vec<Vec<Item<T>>>, row_grid: &Vec<Vec<Item<T>>>) -> Self {
         let cols = Grid::build(col_grid, row_grid.len());
@@ -58,26 +59,22 @@ impl<T: Copy + PartialEq> Branch<T> {
 
     /// Tries to find the solution to this branch.
     /// Fails if the layout is invalid.
-    pub fn solve<TToken: Token>(self, collection: &mut Collection<T, TToken>) {
-        // Emulates recursion because there are to many big variables for the stack.
-
-        let mut branches = vec![self];
-
-        while let Some(mut branch) = branches.pop() {
-            match branch.try_solve(collection) {
-                Ok(_) => match branch.find_unsolved() {
-                    None => {
-                        collection.push(branch.cols.try_into().unwrap());
-                    }
-                    Some(unsolved) => {
-                        let (a, b) = branch.fork(unsolved);
-
-                        branches.push(a);
-                        branches.push(b);
-                    }
+    pub fn solve<TToken: Token>(mut self, collection: &Collection<T, TToken>) {
+        match self.try_solve(collection) {
+            Ok(_) => match self.find_unsolved() {
+                None => {
+                    collection.push(self.cols.try_into().unwrap());
                 }
-                Err(_) => (),
+                Some(unsolved) => {
+                    let (a, b) = self.fork(unsolved);
+
+                    join(
+                        || a.solve(collection),
+                        || b.solve(collection)
+                    );
+                }
             }
+            Err(_) => (),
         }
     }
 

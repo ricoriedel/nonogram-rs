@@ -30,7 +30,7 @@ pub struct Solution<T> {
 }
 
 /// Solves a nonogram.
-pub fn solve<T: Copy + PartialEq, TToken: Token>(
+pub fn solve<T: Copy + PartialEq + Send + Sync, TToken: Token>(
     cols: &Vec<Vec<Item<T>>>,
     rows: &Vec<Vec<Item<T>>>,
     limit: usize,
