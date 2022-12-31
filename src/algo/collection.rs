@@ -2,6 +2,7 @@ use std::sync::Mutex;
 use crate::{Nonogram, Solution, Status, Token};
 use crate::algo::Error;
 
+/// A temporary collection of the solutions found.
 pub struct Collection<TValue, TToken> {
     collection: Mutex<Vec<Nonogram<TValue>>>,
     limit: usize,
@@ -9,6 +10,7 @@ pub struct Collection<TValue, TToken> {
 }
 
 impl<TValue: PartialEq, TToken: Token> Collection<TValue, TToken> {
+    /// Creates a new collection.
     pub fn new(limit: usize, token: TToken) -> Self {
         Self {
             collection: Mutex::new(Vec::new()),
@@ -17,10 +19,12 @@ impl<TValue: PartialEq, TToken: Token> Collection<TValue, TToken> {
         }
     }
 
+    /// Adds a nonogram to the found solutions.
     pub fn push(&self, nonogram: Nonogram<TValue>) {
         self.collection.lock().unwrap().push(nonogram);
     }
 
+    /// Checks if the solving process should be aborted.
     pub fn check(&self) -> Result<(), Error> {
         self.token.check()?;
 

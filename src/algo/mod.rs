@@ -123,6 +123,9 @@ impl<T: Copy + PartialEq + Send> Branch<T> {
         (self, fork)
     }
 
+    /// Finds a unsolved cell if there is any.
+    ///
+    /// Tuple: `(col, row, color)`
     fn find_unsolved(&self) -> Option<(usize, usize, T)> {
         let (cols, rows) = self.cols.len();
 

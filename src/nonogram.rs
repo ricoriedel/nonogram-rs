@@ -146,7 +146,7 @@ impl<'a, T: Copy + Deserialize<'a>> Deserialize<'a> for Nonogram<T> {
         let data: Vec<Vec<Cell<T>>> = Vec::deserialize(deserializer)?;
 
         data.try_into()
-            .map_err(|_| Error::custom("Failed to construct nonogram."))
+            .map_err(|_| Error::custom("Failed to construct a nonogram."))
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::algo::{Error, PartCell};
 use std::ops::Range;
 
-/// Metadata about a chain of [PartCell::Box]s.
+/// Metadata about a chain of boxes.
 #[derive(Clone)]
 pub struct Chain<T> {
     color: T,
@@ -48,7 +48,7 @@ impl<T: Copy + PartialEq> Chain<T> {
         self.end = end;
     }
 
-    /// Returns the range of PartCells which must be filled.
+    /// Returns the range of cells which must be boxes.
     pub fn known_cells(&self) -> Range<usize> {
         let start = self.end - self.len;
         let end = self.start + self.len;

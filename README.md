@@ -66,7 +66,7 @@ Note that the library supports arbitrary color types.
 |  !  | default   |  R  | red     |  r  | dark red     |
 |  0  | black     |  G  | green   |  g  | dark green   |
 |  1  | dark grey |  Y  | yellow  |  y  | dark yellow  |
-|  2  | gray      |  B  | blue    |  b  | dark blue    |
+|  2  | grey      |  B  | blue    |  b  | dark blue    |
 |  3  | white     |  M  | magenta |  m  | dark magenta |
 |     |           |  C  | cyan    |  c  | dark cyan    |
 

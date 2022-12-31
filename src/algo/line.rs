@@ -52,6 +52,8 @@ impl<T: Copy + PartialEq> Line<T> {
     ///
     /// Flags the line, if it has been altered.
     /// See [Line::flagged].
+    ///
+    /// Only [PartCell::Empty] may be override.
     pub fn set(&mut self, cell: usize, value: PartCell<T>) -> Result<(), Error> {
         if self.line[cell] != value {
             if !matches!(self.line[cell], PartCell::Empty) {
