@@ -62,22 +62,14 @@ impl<T: Copy + PartialEq> Chain<T> {
     }
 
     /// Updates the start of a the chain.
-    pub fn update_start(
-        &mut self,
-        line: &Vec<PartCell<T>>,
-        end: usize,
-    ) -> Result<(), Error> {
+    pub fn update_start(&mut self, line: &Vec<PartCell<T>>, end: usize) -> Result<(), Error> {
         self.update_start_by_box_at_end(line, end);
         self.update_start_by_adjacent(line)?;
         self.update_start_by_gabs(line)
     }
 
     /// Mirror of [Chain::update_start].
-    pub fn update_end(
-        &mut self,
-        line: &Vec<PartCell<T>>,
-        start: usize,
-    ) -> Result<(), Error> {
+    pub fn update_end(&mut self, line: &Vec<PartCell<T>>, start: usize) -> Result<(), Error> {
         self.update_end_by_box_at_start(line, start);
         self.update_end_by_adjacent(line)?;
         self.update_end_by_gabs(line)
@@ -242,13 +234,7 @@ mod test {
 
     #[test]
     fn chain_update_start_check_by_box_at_end() {
-        let line = vec![
-            Empty,
-            Empty,
-            Box { color: 1 },
-            Empty,
-            Box { color: 1 },
-        ];
+        let line = vec![Empty, Empty, Box { color: 1 }, Empty, Box { color: 1 }];
         let mut c = Chain::new(1, 1, 0, line.len());
 
         c.update_start(&line, 3).unwrap();
@@ -258,12 +244,7 @@ mod test {
 
     #[test]
     fn chain_update_start_check_by_adjacent() {
-        let line = vec![
-            Box { color: 1 },
-            Box { color: 1 },
-            Empty,
-            Empty,
-        ];
+        let line = vec![Box { color: 1 }, Box { color: 1 }, Empty, Empty];
         let mut c = Chain::new(1, 1, 1, line.len());
 
         c.update_start(&line, line.len()).unwrap();
@@ -273,12 +254,7 @@ mod test {
 
     #[test]
     fn chain_update_start_check_by_gabs() {
-        let line = vec![
-            Space,
-            Space,
-            Empty,
-            Empty,
-        ];
+        let line = vec![Space, Space, Empty, Empty];
         let mut c = Chain::new(1, 1, 0, line.len());
 
         c.update_start(&line, line.len()).unwrap();
@@ -288,13 +264,7 @@ mod test {
 
     #[test]
     fn chain_update_end_check_by_box_at_start() {
-        let line = vec![
-            Box { color: 1 },
-            Empty,
-            Box { color: 1 },
-            Empty,
-            Empty,
-        ];
+        let line = vec![Box { color: 1 }, Empty, Box { color: 1 }, Empty, Empty];
         let mut c = Chain::new(1, 1, 0, line.len());
 
         c.update_end(&line, 2).unwrap();
@@ -304,12 +274,7 @@ mod test {
 
     #[test]
     fn chain_update_end_check_by_adjacent() {
-        let line = vec![
-            Empty,
-            Empty,
-            Box { color: 1 },
-            Box { color: 1 },
-        ];
+        let line = vec![Empty, Empty, Box { color: 1 }, Box { color: 1 }];
         let mut c = Chain::new(1, 1, 0, 2);
 
         c.update_end(&line, line.len()).unwrap();
@@ -319,12 +284,7 @@ mod test {
 
     #[test]
     fn chain_update_end_check_by_gabs() {
-        let line = vec![
-            Empty,
-            Empty,
-            Space,
-            Space,
-        ];
+        let line = vec![Empty, Empty, Space, Space];
         let mut c = Chain::new(1, 1, 0, line.len());
 
         c.update_end(&line, line.len()).unwrap();

@@ -3,7 +3,7 @@ mod cancel;
 mod layout;
 mod nonogram;
 
-pub use cancel::{Token, Cancelled};
+pub use cancel::{Cancelled, Token};
 pub use layout::{Item, Layout};
 pub use nonogram::{Cell, Nonogram};
 
@@ -27,5 +27,5 @@ pub struct Solution<T: Copy> {
     /// All found solutions to the [Layout].
     pub collection: Vec<Nonogram<T>>,
     /// The status when creating this [Solution].
-    pub status: Status
+    pub status: Status,
 }

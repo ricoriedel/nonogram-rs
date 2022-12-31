@@ -1,7 +1,7 @@
 use crate::{Solution, Token};
 
-use crate::algo::Branch;
 use crate::algo::collection::Collection;
+use crate::algo::Branch;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};

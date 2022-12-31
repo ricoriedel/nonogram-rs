@@ -155,7 +155,12 @@ impl<T: Copy + PartialEq> Line<T> {
     }
 
     /// Updates the start of a chain and returns [Chain::min_prev_start].
-    fn update_start(&mut self, index: usize, prev_start: usize, same_color: bool) -> Result<usize, Error> {
+    fn update_start(
+        &mut self,
+        index: usize,
+        prev_start: usize,
+        same_color: bool,
+    ) -> Result<usize, Error> {
         let chain = &mut self.data[index];
 
         chain.update_start(&self.line, prev_start)?;
@@ -164,7 +169,12 @@ impl<T: Copy + PartialEq> Line<T> {
     }
 
     /// Updates the end of a chain and returns [Chain::max_prev_end].
-    fn update_end(&mut self, index: usize, prev_end: usize, same_color: bool) -> Result<usize, Error> {
+    fn update_end(
+        &mut self,
+        index: usize,
+        prev_end: usize,
+        same_color: bool,
+    ) -> Result<usize, Error> {
         let chain = &mut self.data[index];
 
         chain.update_end(&self.line, prev_end)?;

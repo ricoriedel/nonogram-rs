@@ -4,9 +4,9 @@ use grid::Grid;
 use rayon::join;
 
 pub mod chain;
-pub mod line;
 pub mod collection;
 pub mod grid;
+pub mod line;
 
 /// A [super::Cell] that might not has a value yet.
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -87,12 +87,9 @@ impl<T: Copy + PartialEq + Send> Branch<T> {
                 Some(unsolved) => {
                     let (a, b) = self.fork(unsolved);
 
-                    join(
-                        || a.solve(collection),
-                        || b.solve(collection),
-                    );
+                    join(|| a.solve(collection), || b.solve(collection));
                 }
-            }
+            },
             Err(_) => (),
         }
     }
@@ -142,9 +139,9 @@ impl<T: Copy + PartialEq + Send> Branch<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Cell::*;
-    use crate::{Status, Solution};
     use crate::cancel::Cancel;
+    use crate::Cell::*;
+    use crate::{Solution, Status};
 
     #[test]
     fn branch_solve() {

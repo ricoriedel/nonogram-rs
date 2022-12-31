@@ -14,7 +14,9 @@ fn bench_res(c: &mut Criterion, name: &str) {
         cols: layout.rows,
         rows: layout.cols,
     };
-    c.bench_function(&swapped_name, |b| b.iter(|| swapped.clone().solve(usize::MAX, ())));
+    c.bench_function(&swapped_name, |b| {
+        b.iter(|| swapped.clone().solve(usize::MAX, ()))
+    });
 }
 
 fn apple(c: &mut Criterion) {

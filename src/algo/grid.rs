@@ -11,7 +11,10 @@ pub struct Grid<T> {
 impl<T: Copy + PartialEq> Grid<T> {
     /// Constructs a new grid.
     pub fn build(numbers: Vec<Vec<Item<T>>>, length: usize) -> Self {
-        let lines = numbers.into_iter().map(|col| Line::build(col, length)).collect();
+        let lines = numbers
+            .into_iter()
+            .map(|col| Line::build(col, length))
+            .collect();
 
         Self { lines }
     }

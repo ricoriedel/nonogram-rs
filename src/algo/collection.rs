@@ -1,6 +1,6 @@
-use std::sync::Mutex;
-use crate::{Nonogram, Solution, Status, Token};
 use crate::algo::Error;
+use crate::{Nonogram, Solution, Status, Token};
+use std::sync::Mutex;
 
 /// A temporary collection of the solutions found.
 pub struct Collection<TValue, TToken> {
@@ -42,7 +42,7 @@ impl<T: Copy + PartialEq + Send, TToken: Token> From<Collection<T, TToken>> for 
             Ok(_) => Status::Complete,
             Err(Error::Full) => Status::Full,
             Err(Error::Cancelled) => Status::Cancelled,
-            _ => panic!()
+            _ => panic!(),
         };
         Solution {
             collection: collection.collection.into_inner().unwrap(),
@@ -53,8 +53,8 @@ impl<T: Copy + PartialEq + Send, TToken: Token> From<Collection<T, TToken>> for 
 
 #[cfg(test)]
 mod test {
-    use crate::cancel::Cancel;
     use super::*;
+    use crate::cancel::Cancel;
 
     #[test]
     fn collection_push() {

@@ -1,5 +1,5 @@
-use std::fmt::{Debug, Formatter};
 use nonogram_rs::*;
+use std::fmt::{Debug, Formatter};
 use std::io::{stdin, stdout, Write};
 
 use clap::{Parser, Subcommand};
@@ -30,17 +30,13 @@ enum CliError {
 
 impl From<serde_json::Error> for CliError {
     fn from(error: serde_json::Error) -> Self {
-        Self::ParsingError {
-            error
-        }
+        Self::ParsingError { error }
     }
 }
 
 impl From<std::io::Error> for CliError {
     fn from(error: std::io::Error) -> Self {
-        Self::IoError {
-            error
-        }
+        Self::IoError { error }
     }
 }
 
@@ -114,9 +110,10 @@ fn print_nonogram(nonogram: Nonogram<char>) -> Result<(), CliError> {
                 }
             }
         }
-        stdout().queue(SetForegroundColor(Color::Reset))?;
         stdout().queue(Print("\n"))?;
     }
+    stdout().queue(SetForegroundColor(Color::Reset))?;
+
     Ok(())
 }
 
