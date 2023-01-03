@@ -2,7 +2,7 @@
 name = "nonogram-rs"
 description = "A fast and lightweight nonogram solving library."
 authors = ["Rico Riedel <rico.riedel@protonmail.ch>"]
-version = "2.2.0"
+version = "2.2.1"
 edition = "2021"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/ricoriedel/nonogram-rs"
