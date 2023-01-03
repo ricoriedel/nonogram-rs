@@ -237,6 +237,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "serde")]
     fn serialize_deserialize() {
         let mut src = Nonogram::new(3, 5);
         src[(2, 3)] = Cell::Space;
