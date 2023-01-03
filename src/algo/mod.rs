@@ -96,7 +96,7 @@ impl<T: Copy + PartialEq + Send> Branch<T> {
 
     /// Tries to solve a branch without forking.
     fn try_solve<TToken: Token>(&mut self, token: &Collection<T, TToken>) -> Result<(), Error> {
-        while self.cols.flagged() {
+        while self.cols.flagged() || self.rows.flagged() {
             self.cols.update()?;
             self.cols.write_to(&mut self.rows)?;
             self.rows.update()?;
@@ -179,6 +179,48 @@ mod test {
     fn branch_solve_invalid() {
         let cols = vec![vec![Item { color: 'a', len: 1 }]];
         let rows = vec![vec![Item { color: 'b', len: 1 }]];
+
+        let mut collection = Collection::new(usize::MAX, ());
+
+        Branch::build(cols, rows).solve(&mut collection);
+
+        let solution: Solution<char> = collection.into();
+
+        assert!(solution.collection.is_empty());
+    }
+
+    #[test]
+    fn branch_solve_invalid_empty_cols() {
+        let cols = vec![];
+        let rows = vec![vec![Item { color: 'b', len: 1 }]];
+
+        let mut collection = Collection::new(usize::MAX, ());
+
+        Branch::build(cols, rows).solve(&mut collection);
+
+        let solution: Solution<char> = collection.into();
+
+        assert!(solution.collection.is_empty());
+    }
+
+    #[test]
+    fn branch_solve_invalid_empty_rows() {
+        let cols = vec![vec![Item { color: 'b', len: 1 }]];
+        let rows = vec![];
+
+        let mut collection = Collection::new(usize::MAX, ());
+
+        Branch::build(cols, rows).solve(&mut collection);
+
+        let solution: Solution<char> = collection.into();
+
+        assert!(solution.collection.is_empty());
+    }
+
+    #[test]
+    fn branch_solve_invalid_empty() {
+        let cols = vec![];
+        let rows = vec![];
 
         let mut collection = Collection::new(usize::MAX, ());
 
