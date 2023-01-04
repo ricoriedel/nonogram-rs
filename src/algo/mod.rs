@@ -218,7 +218,7 @@ mod test {
     }
 
     #[test]
-    fn branch_solve_invalid_empty() {
+    fn branch_solve_empty() {
         let cols = vec![];
         let rows = vec![];
 
@@ -228,7 +228,7 @@ mod test {
 
         let solution: Solution<char> = collection.into();
 
-        assert!(solution.collection.is_empty());
+        assert_eq!(1, solution.collection.len());
     }
 
     #[test]
